@@ -50,9 +50,3 @@ let convertion_eq_to_application eq =
     | (s,Eslice (a, b, c)) -> (key_of_ident s, MEslice (a, b, key_of_arg c))
     | (s,Eselect (a, b)) -> (key_of_ident s, MEselect (a, key_of_arg b))
 
-
-type program =
-    { p_eqs : equation list;
-      p_inputs : ident list;
-      p_outputs : ident list;
-      p_vars : ty Env.t; }
