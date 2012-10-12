@@ -33,5 +33,5 @@ let add_edge g id1 id2 =
 let has_cycle g = failwith "Non implemente"
 
 (* Renvoie les noeuds dans un ordre topologique *)
-let topological g = failwith "Non implemente" 
+let topological g = failwith "Non implemente"
 
