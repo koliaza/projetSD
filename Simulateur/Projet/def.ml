@@ -36,7 +36,7 @@ let (identvsint : (ident, int) Hashtbl.t) = Hashtbl.create 53
 (* la taille importe peu, on ne fait pas un truc optimisé*)
 let (constvsint : (value, int) Hashtbl.t) = Hashtbl.create 53
 
-let lastkeygiven = ref(0) 
+let lastkeygiven = ref(-1) 
 (* sert pour donnée une nouvelle clée dans le tableau final *)
 
 
