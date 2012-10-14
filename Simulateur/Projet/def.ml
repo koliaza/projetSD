@@ -71,7 +71,7 @@ let convertion_eq_to_application eq =
   match eq with
     | (s,Earg a) -> (key_of_ident s, MEarg (key_of_arg a))
     | (s,Ereg a) -> (key_of_ident s, MEreg (key_of_ident a, ref(Vbit false)))
-    | (s,ENot a) -> (key_of_ident s, MEreg (key_of_arg a))
+    | (s,ENot a) -> (key_of_ident s, MENot (key_of_arg a))
     | (s,Ebinop (binop, a, b)) -> begin
                     match binop with
 		      | Or -> (key_of_ident s, MOr (key_of_arg a,key_of_arg b))
