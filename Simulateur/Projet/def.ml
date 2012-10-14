@@ -1,22 +1,26 @@
-(* définition et construction des types que l'on va utiliser *)
+(* definition et construction des types que l'on va utiliser *)
 
 open Netlist_ast (* chargement des anciens types *)
 open Hashtbl
-(* principales différentes:
-les variables sont toutes dans un tableau (entrée, sorties, variables, constantes)
+(* principales differentes:
+les variables sont toutes dans un tableau (entree, sorties, variables, 
+constantes)
 
 
-Tout commence par M car sinon il y aurait conflit de notation avec les anciens types 
+Tout commence par M car sinon il y aurait conflit de notation avec les 
+anciens types 
 *)
 
 (* sorties , application entrees *)
+(* 
+cette d�finition a une erreur de syntaxe.
 type application =
   | int * MOr of int * int
   | int * MXor of int * int
   | int * MAnd of int * int
   | int * MNand of int * int
   | int * MEarg of int
-  | int * MEreg of int * ref(value)   (* reference sur la derniere valeur entree *)
+  | int * MEreg of int * ref(value)  
   | int * MENot of int
   | int * MEmux of int * int * int
   | int * MErom of int * int * int 
@@ -25,8 +29,27 @@ type application =
   | int * MEslice of int * int * int
   | int * MEselect of int * int
 
+*)
+
+type mconstructeur =
+  | MOr of int * int
+  | MXor of int * int
+  | MAnd of int * int
+  | MNand of int * int
+  | MEarg of int
+  | MEreg of int * (value ref)   (* reference sur la derniere valeur entree *)
+  | MEnot of int
+  | MEmux of int * int * int
+  | MErom of int * int * int 
+  | MEram of int * int * int * int * int * int
+  | MEconcat of int * int
+  | MEslice of int * int * int
+  | MEselect of int * int
+
+type application = int * mconstructeur
+
 (* id est du type string = ident.
-on place dans un table de hachage la clée donnée à id si elle n'existe pas deja.
+on place dans un table de hachage la cle donnee a id si elle n'existe pas deja.
 On renvoie la cle associee.
 Une fois tout les cles donnees, il faut ensuite creer le tableau contenant les
  variables 
@@ -58,9 +81,9 @@ let key_of_arg a =
     |Avar id -> key_of_ident id
     |Aconst c ->
        try 
-         Hashtbl.find constvsint id
+         Hashtbl.find constvsint c
        with Not_found ->
-         Hashtbl.add constvsint id (!lastkeygiven +1);
+         Hashtbl.add constvsint c (!lastkeygiven +1);
          lastkeygiven := !lastkeygiven +1;
          list_const := (!lastkeygiven,c) :: !list_const; 
          !lastkeygiven
@@ -70,8 +93,8 @@ let key_of_arg a =
 let convertion_eq_to_application eq =
   match eq with
     | (s,Earg a) -> (key_of_ident s, MEarg (key_of_arg a))
-    | (s,Ereg a) -> (key_of_ident s, MEreg (key_of_ident a, ref(Vbit false)))
-    | (s,ENot a) -> (key_of_ident s, MENot (key_of_arg a))
+    | (s,Ereg a) -> (key_of_ident s, MEreg (key_of_ident a, ref(VBit false)))
+    | (s,Enot a) -> (key_of_ident s, MEnot (key_of_arg a))
     | (s,Ebinop (binop, a, b)) -> begin
                     match binop with
 		      | Or -> (key_of_ident s, MOr (key_of_arg a,key_of_arg b))
@@ -96,12 +119,12 @@ let convertion_eq_to_application eq =
 
 (* hypothese : toutes les cles necessaires ont ete donnees*)
 let init_tableau =
-  let t = Array.make (!lastkeygiven +1) (Vbit false) in
-  let lconst_restant = ref lconst in
+  let t = Array.make (!lastkeygiven +1) (VBit false) in
+  let lconst_restant = ref(!list_const) in
     while !lconst_restant <> [] do
-      let (key,la_const) = hd (!lconst_restant) in
+      let (key,la_const) = List.hd (!lconst_restant) in
         t.(key) <- la_const;
-        lconst_restant := tl( !lconst_restant);
+        lconst_restant := List.tl( !lconst_restant);
     done;
   t
 
