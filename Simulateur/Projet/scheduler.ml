@@ -32,12 +32,20 @@ let rec sans_input l linput =
  with Not_found -> hd l ::(sans_input (tl l) linput)
  end
 
+let gestion_edge g eq =
+  match eq with
+      |(_,Ereg(_)) -> ()   
+(* on ne met pas les liaisons des Registres car ils sont considérés à la fois comme des inputs et des portes qui ont une entrée.*)
+      |_ -> List.iter (add_edge g (fst eq)) (read_exp eq) 
+
+
+
 let schedule p = 
   let gauche_liste =List.map (function eq -> fst eq) p.p_eqs in 
   let vertex_liste = p.p_inputs@gauche_liste in 
   let g = mk_graph() in 
   List.iter (add_node g) vertex_liste ;
-  List.iter (function eq -> List.iter (add_edge g (fst eq)) (read_exp eq)) p.p_eqs;
+  List.iter (fun eq -> gestion_edge g eq) p.p_eqs;
   let rec renvoyer_eq l_a l_b =  match l_a with 
     | [] -> [] 
     | t::q -> (List.find (function eq -> fst eq = t) l_b)::(renvoyer_eq q l_b)
