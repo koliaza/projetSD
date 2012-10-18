@@ -48,6 +48,14 @@ type mconstructeur =
 
 type application = int * mconstructeur
 
+type Mprogram =
+    { Mp_eqs : application list;
+      Mp_inputs : ident list;
+      Mp_outputs : ident list;
+      Mp_vars : ty Env.t; 
+      Mp_tabvar : value vect ;
+      Mp_special : application list;} (* contient une copie des registres, ... à traiter différemment *)
+
 (* id est du type string = ident.
 on place dans un table de hachage la cle donnee a id si elle n'existe pas deja.
 On renvoie la cle associee.
@@ -89,11 +97,13 @@ let key_of_arg a =
          !lastkeygiven
 
 
-
-let convertion_eq_to_application eq =
+(* on ajoute les registres dans !Mp_special par effet de bord *)
+let convertion_eq_to_application Mp_special eq = 
   match eq with
     | (s,Earg a) -> (key_of_ident s, MEarg (key_of_arg a))
-    | (s,Ereg a) -> (key_of_ident s, MEreg (key_of_ident a, ref(VBit false)))
+    | (s,Ereg a) -> let resultat = (key_of_ident s, MEreg (key_of_ident a, ref(VBit false))) in
+                    Mp_special = resultat :: (!Mp_special);
+                    resultat
     | (s,Enot a) -> (key_of_ident s, MEnot (key_of_arg a))
     | (s,Ebinop (binop, a, b)) -> begin
                     match binop with
@@ -129,4 +139,14 @@ let init_tableau =
   t
 
 
-    
+let convertion_programme p =
+  let p' = scheduler p in
+  let Mlist_special = ref([]) in
+  let new_eqs = List.map (fun eq -> convertion_eq_to_application Mlist_special eq) p'.p_eqs in
+  {  Mp_eqs = new_eqs ;
+     Mp_inputs = p'.inputs;
+     Mp_outputs = p'.outputs;
+     Mp_vars  = p'.p_vars; 
+     Mp_tabvar = init_tableau ();
+     Mp_special = !Mlist_special; }
+      

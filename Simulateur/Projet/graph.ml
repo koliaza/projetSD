@@ -47,10 +47,7 @@ let has_cycle g =
     | Cycle -> true
 
 
-let rec remove_doubles = function 
-	| [] -> [] 
-	| t::q -> if List.mem t q then remove_doubles q else t::(remove_doubles q)
-;;
+
 	
 	
 let topological g =
@@ -65,6 +62,6 @@ let topological g =
   in
   try
     clear_marks g;
-    remove_doubles (List.fold_left visit [] (find_roots g))
+    List.fold_left visit [] (find_roots g)
   with
     | Cycle -> []
