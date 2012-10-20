@@ -24,7 +24,7 @@ let main_exec filename=
     in
     begin try
         let p = Scheduler.schedule netp in
-		if oprint then
+		if !oprint then
 			Netlist_printer.print_program out p;
 		else () 
       with
