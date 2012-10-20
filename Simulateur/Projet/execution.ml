@@ -106,9 +106,12 @@ let rec sortie_reg = function
 		
 let rec execution_a_step p_eqs = 
 	get_inputs () ;
-	List.iter sortie_reg reg_liste ;(*il faut définir une liste ne contenant que les équations de registre *)
+	List.iter sortie_reg reg_liste ;
+	(*il faut définir une liste ne contenant que les équations de registre *)
 	List.iter entree_reg reg_liste ;
 	List.iter apply_eq p_eqs ;
+	if Main.!overbose then print_outputs (out_liste) ; 
+	(* meme probleme de definition que pour exec_debug*)
 
 	
 (*fonctions pour retourner à l'écran les valeurs des outputs*)
