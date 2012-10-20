@@ -2,7 +2,7 @@
 
 open Netlist_ast (* chargement des anciens types *)
 open Hashtbl
-(* principales differentes:
+(* principales differences:
 les variables sont toutes dans un tableau (entree, sorties, variables, 
 constantes)
 
@@ -98,7 +98,7 @@ let key_of_arg a =
 
 
 (* on ajoute les registres dans !Mp_special par effet de bord *)
-let convertion_eq_to_application Mp_special eq = 
+let conversion_eq_to_application Mp_special eq = 
   match eq with
     | (s,Earg a) -> (key_of_ident s, MEarg (key_of_arg a))
     | (s,Ereg a) -> let resultat = (key_of_ident s, MEreg (key_of_ident a, ref(VBit false))) in
@@ -139,14 +139,13 @@ let init_tableau =
   t
 
 
-let convertion_programme p =
-  let p' = scheduler p in
+let conversion_programme p =
   let Mlist_special = ref([]) in
-  let new_eqs = List.map (fun eq -> convertion_eq_to_application Mlist_special eq) p'.p_eqs in
+  let new_eqs = List.map (fun eq -> conversion_eq_to_application Mlist_special eq) p.p_eqs in
   {  Mp_eqs = new_eqs ;
-     Mp_inputs = p'.inputs;
-     Mp_outputs = p'.outputs;
-     Mp_vars  = p'.p_vars; 
+     Mp_inputs = p.inputs;
+     Mp_outputs = p.outputs;
+     Mp_vars  = p.p_vars; 
      Mp_tabvar = init_tableau ();
      Mp_special = !Mlist_special; }
       
