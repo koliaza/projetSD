@@ -1,12 +1,6 @@
 (*open???*)
 
-(* pour la lisibilite on le laisse actuellement a l'exterieur.
-Mais on le mettra dans execution pour qu'il puisse avoir acces
-a t *)
-
-(*on définit les foncitons sur les valeurs*)
-
-let freq = ref 1.
+let clock = ref 1.
 (*temps à attendre entre chaque execution, en ms, je sais pas trop ce qu'il faudra prendre, 
 on pourra toujours demander lors du lancement du programme*)
 
@@ -54,12 +48,19 @@ let vmux = function
 	(en faisant une opération bit à bit sur les valeurs d'entrée par exemple?) 
 	*)
 
+(*fonctions qui gèrent le cas particulier des registres*)			
+let rec entree_reg = function 
+	| (id, MEreg(k,k')) -> k' := init_tableau.(k)
+	| _ -> failwith "la liste attendue ne doit comporter que des registres"
+	
+let rec sortie_reg = function 
+	| (id, MEreg(k,k')) -> init_tableau.(id) <- !k'
+	| _ -> failwith "la liste attendue ne doit comporter que des registres"
 
-(*Remarque, les registres doivent être traités A PART*)	
 let apply_eq eq = 
 	match snd (eq) with 
 		| MEarg(k) ->   init_tableau.(fst eq) <- init_tableau.(k)
-		| MEreg(_) ->  () ;
+		| MEreg(_) ->  entree_reg eq ;
 		| MENot(k) ->  init_tableau.(fst eq) <- vnot init_tableau.(k)
 		| MOr(k,k') ->  init_tableau.(fst eq) <- vor (init_tableau.(k),init_tableau.(k'))
 		| MAnd(k,k') ->  init_tableau.(fst eq) <- vand (init_tableau.(k),init_tableau.(k'))
@@ -93,30 +94,18 @@ let rec get_inputs = function
 		get_inputs q
 			
 
-(*fonctions qui gèrent le cas particulier des registres*)			
-let rec entree_reg = function 
-	| [] -> () 
-	| (id, MEreg(k,k')) -> k' := init_tableau.(k)
-	| _ -> failwith "la liste attendue ne doit comporter que des registres"
-	
-let rec sortie_reg = function 
-	| [] -> () 
-	| (id, MEreg(k,k')) -> init_tableau.(id) <- !k'
-	| _ -> failwith "la liste attendue ne doit comporter que des registres"
 		
-let rec execution_a_step p_eqs = 
-	get_inputs () ;
-	List.iter sortie_reg reg_liste ;
-	(*il faut définir une liste ne contenant que les équations de registre *)
-	List.iter entree_reg reg_liste ;
-	List.iter apply_eq p_eqs ;
-	if Main.!overbose then print_outputs (out_liste) ; 
-	(* meme probleme de definition que pour exec_debug*)
+let rec execution_a_step mp = 
+	get_inputs (mp.mp_inputs) ;
+	List.iter sortie_reg (mp.mp_special) ; 
+(* Mp_special ne contient que les registres jusqu'à maintenant *) 
+	List.iter apply_eq (mp.mp_eqs) ;
+	if Main.!overbose then print_outputs (mp.mp_outputs) ; 
 
 	
 (*fonctions pour retourner à l'écran les valeurs des outputs*)
 let print_value k = 
-	let i = key_of_indent k in 
+	let i = key_of_ident k in 
 	begin
 	match init_tableau.(i) with 
 		| VBit(b) -> if b then print_int 1 else print_int 0 ;
@@ -131,14 +120,14 @@ let rec print_outputs = function
 		print_outputs q ;
 	
 
-let execution n p_eqs = 
+let execution n mp = (* mp de type Mprogramme *) 
   if n = -1 then 
     while(true) do
-      execution_a_step p_eqs
+      execution_a_step mp
     done;
   else 
    for i = 1 to n do
-     execution_a_step p_eqs
+     execution_a_step mp
    done;
    
 (*fonction pour demander à l'utilisateur s'il souhaite continuer*)
@@ -151,10 +140,10 @@ let ask_continue () =
 		| _ -> ask_continue () ;
    
   (*fonction pour lancer la boucle du mode pas à pas*)
- let exec_debug p_eqs = 
+ let exec_debug mp = 
 	while true do 
-		execution_a_step p_eqs ;
-		print_outputs (out_liste) ;(*il faut voir comment on accède à out_liste*)
+		execution_a_step mp ;
+		(* koliaza : il faut mettre Main.!overbose à true avant l'appel de cette fonction *)
 		ask_continue () ;
 	done ;;
 		
