@@ -54,7 +54,7 @@ let schedule p =
               | [] -> [] 
               | t::q -> (List.find (function eq -> fst eq = t) l_b)::(renvoyer_eq q l_b)
       in 
-  {p_eqs = renvoyer_eq ( (enleve_elements (List.rev (topological g)) (p.p_inputs@liste_sortie_reg))  @  liste_sortie_reg ) p.p_eqs;
+  {p_eqs = renvoyer_eq ( (enleve_element (List.rev (topological g)) (p.p_inputs@(!liste_sortie_reg))) @ (!liste_sortie_reg) ) p.p_eqs;
   p_inputs = p.p_inputs ;
   p_outputs = p.p_outputs ;
   p_vars = p.p_vars }
