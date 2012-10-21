@@ -7,29 +7,12 @@ les variables sont toutes dans un tableau (entree, sorties, variables,
 constantes)
 
 
-Tout commence par M car sinon il y aurait conflit de notation avec les 
+Tout commence par m car sinon il y aurait conflit de notation avec les 
 anciens types 
 *)
 
 (* sorties , application entrees *)
-(* 
-cette définition a une erreur de syntaxe.
-type application =
-  | int * MOr of int * int
-  | int * MXor of int * int
-  | int * MAnd of int * int
-  | int * MNand of int * int
-  | int * MEarg of int
-  | int * MEreg of int * ref(value)  
-  | int * MENot of int
-  | int * MEmux of int * int * int
-  | int * MErom of int * int * int 
-  | int * MEram of int * int * int * int * int * int
-  | int * MEconcat of int * int
-  | int * MEslice of int * int * int
-  | int * MEselect of int * int
 
-*)
 
 type mconstructeur =
   | MOr of int * int
@@ -48,13 +31,13 @@ type mconstructeur =
 
 type application = int * mconstructeur
 
-type Mprogram =
-    { Mp_eqs : application list;
-      Mp_inputs : ident list;
-      Mp_outputs : ident list;
-      Mp_vars : ty Env.t; 
-      Mp_tabvar : value vect ;
-      Mp_special : application list;} (* contient une copie des registres, ... à traiter différemment *)
+type mprogram =
+    { mp_eqs : application list;
+      mp_inputs : ident list;
+      mp_outputs : ident list;
+      mp_vars : ty Env.t; 
+      mp_tabvar : value vect ;
+      mp_special : application list;} (* contient une copie des registres, ... à traiter différemment *)
 
 (* id est du type string = ident.
 on place dans un table de hachage la cle donnee a id si elle n'existe pas deja.
@@ -97,12 +80,12 @@ let key_of_arg a =
          !lastkeygiven
 
 
-(* on ajoute les registres dans !Mp_special par effet de bord *)
-let conversion_eq_to_application Mp_special eq = 
+(* on ajoute les registres dans !mp_special par effet de bord *)
+let conversion_eq_to_application mp_special eq = 
   match eq with
     | (s,Earg a) -> (key_of_ident s, MEarg (key_of_arg a))
     | (s,Ereg a) -> let resultat = (key_of_ident s, MEreg (key_of_ident a, ref(VBit false))) in
-                    Mp_special = resultat :: (!Mp_special);
+                    mp_special = resultat :: (!mp_special);
                     resultat
     | (s,Enot a) -> (key_of_ident s, MEnot (key_of_arg a))
     | (s,Ebinop (binop, a, b)) -> begin
@@ -140,12 +123,12 @@ let init_tableau =
 
 
 let conversion_programme p =
-  let Mlist_special = ref([]) in
-  let new_eqs = List.map (fun eq -> conversion_eq_to_application Mlist_special eq) p.p_eqs in
-  {  Mp_eqs = new_eqs ;
-     Mp_inputs = p.inputs;
-     Mp_outputs = p.outputs;
-     Mp_vars  = p.p_vars; 
-     Mp_tabvar = init_tableau ();
-     Mp_special = !Mlist_special; }
+  let mlist_special = ref([]) in
+  let new_eqs = List.map (fun eq -> conversion_eq_to_application mlist_special eq) p.p_eqs in
+  {  mp_eqs = new_eqs ;
+     mp_inputs = p.inputs;
+     mp_outputs = p.outputs;
+     mp_vars  = p.p_vars; 
+     mp_tabvar = init_tableau ();
+     mp_special = !mlist_special; }
       
