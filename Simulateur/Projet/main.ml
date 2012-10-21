@@ -25,7 +25,7 @@ let main_exec filename=
     begin try
         let p = Scheduler.schedule netp in
 		if !oprint then
-			Netlist_printer.print_program out p;
+			Netlist_printer.print_program out p; (* Netlist_printer est à modifier pour indiquer comment est traité le cas des registres *)
 		else () 
       with
         | Scheduler.Combinational_cycle ->
@@ -34,14 +34,11 @@ let main_exec filename=
     in
     close_all ();
     if not !oschedule then (
-		let p' = conversion_programme p in 
-		  let simulator eqs =
-			if odebug then
-			 Execution.exec_debug eqs
-			else
-			 Execution.execution !osteps eqs
-		  in
-		  simulator p'.eqs
+		let mp = conversion_programme p in
+		  if odebug then
+		     Execution.exec_debug mp   (* koliaza: Marc veut que tu lui passes une variable de plus pour afficher les sorties : regarde son code aux lignes où il y a !Main. *)
+		  else
+		     Execution.execution !osteps mp
 		)
   with
     | Netlist.Parse_error s -> Format.eprintf "A Netlist error accurred: %s@." s; exit 2
