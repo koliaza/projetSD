@@ -51,6 +51,14 @@ let concat_value = function
   | (VBitArray v1, VBitArray v2) -> VBitArray (Array.append v1 v2)
   | (VBit b1, VBitArray v2) -> VBitArray (Array.append [|b1|] v2)
   | (VBitArray v1, VBit b2) -> VBitArray (Array.append v1 [|b2|])
+  
+let slice i j = function 
+	| VBit(b) when i = 0 && j = 0 -> VBit(b)
+	| VBitArray(v) when i <= j && j < Array.length v -> 
+		let v = Array.init (j-i+1) (fun k -> v.(k+i)) in 
+		VBitArray(v) 
+	| _ -> failwith "acces a un bit inexistant" 
+
 
 let apply_eq tabvar eq = 
 	match snd (eq) with 
@@ -64,7 +72,7 @@ let apply_eq tabvar eq =
 		| MEmux(k,k1,k2) ->  tabvar.(fst eq) <- vmux (tabvar.(k),tabvar.(k1),tabvar.(k2))
 		| MErom(_) -> failwith "Erom non implémenté"
 		| MEram(_) -> failwith "Eram non implémenté"
-		| MEslice(_) -> failwith "Eslice non implémenté"
+		| MEslice(s1,s2,k) ->  tabvar.(fst eq) <- slice s1 s2 tabvar.(k)
 		| MEselect(n,k) -> tabvar.(fst eq) <- extraction_VBit n (tabvar.(k)) 		
 		| MEconcat(k1,k2) -> tabvar.(fst eq) <- concat_value (tabvar.(k1),tabvar.(k2))
 		
@@ -93,16 +101,9 @@ let rec get_inputs tabvar = function
 	| [] -> ()
 	| t::q -> 
 		print_string ("valeur de l'entree "^t^" ? \n") ;
-		let n = ref (int_of_string ("0b" ^ (read_line ()))) in 
-		let v = if !n <=1 then VBit (!n = 1) 
-			else 
-			(let l = ref [] in 
-			while !n <> 0 do 
-			l := ((!n mod 2) = 1)::(!l) ;
-			n := !n / 2 ;
-			done ;
-		        VBitArray (Array.of_list (List.rev !l)) )
-		in tabvar.(key_of_ident t) <- v ;
+		let s = read_line () in 
+		let v = Array.init (String.length s) (function i -> s.[i] = '1' ) in
+		tabvar.(key_of_ident t) <- VBitArray(v) ;
 		get_inputs tabvar q
 			
 
