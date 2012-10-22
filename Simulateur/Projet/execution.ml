@@ -35,9 +35,22 @@ let rec entree_reg tabvar = function
 	| (id, MEreg(k,k')) -> k' := tabvar.(k)
 	| _ -> failwith "la liste attendue ne doit comporter que des registres"
 	
-let rec sortie_reg tabvar= function 
+let rec sortie_reg tabvar = function 
 	| (id, MEreg(k,k')) -> tabvar.(id) <- !k'
 	| _ -> failwith "la liste attendue ne doit comporter que des registres"
+
+let extraction_VBit n = function
+  | (VBit b) -> if n = 0 then VBit b
+                         else failwith "acces un un bit inexistant"  
+  | (VBitArray v) -> let nmax = Array.length v -1 in
+                       if 0<=n & n<=nmax then VBit (v.(n))
+                       else failwith "acces à un bit inexistant dans un tableau"
+
+let concat_value = function 
+  | (VBit b1, VBit b2) -> VBitArray [| b1;b2|]
+  | (VBitArray v1, VBitArray v2) -> VBitArray (Array.append v1 v2)
+  | (VBit b1, VBitArray v2) -> VBitArray (Array.append [|b1|] v2)
+  | (VBitArray v1, VBit b2) -> VBitArray (Array.append v1 [|b2|])
 
 let apply_eq tabvar eq = 
 	match snd (eq) with 
@@ -49,11 +62,11 @@ let apply_eq tabvar eq =
 		| MNand(k,k') ->  tabvar.(fst eq) <- vnand (tabvar.(k),tabvar.(k'))	
 		| MXor(k,k') ->  tabvar.(fst eq) <- vxor (tabvar.(k),tabvar.(k'))
 		| MEmux(k,k1,k2) ->  tabvar.(fst eq) <- vmux (tabvar.(k),tabvar.(k1),tabvar.(k2))
-		| MErom(_) -> failwith "non implémenté"
-		| MEram(_) -> failwith "non implémenté"
-		| MEslice(_) -> failwith "non implémenté"
-		| MEselect(_) -> failwith "non implémenté"		
-		| MEconcat(_) -> failwith "non implémenté"
+		| MErom(_) -> failwith "Erom non implémenté"
+		| MEram(_) -> failwith "Eram non implémenté"
+		| MEslice(_) -> failwith "Eslice non implémenté"
+		| MEselect(n,k) -> tabvar.(fst eq) <- extraction_VBit n (tabvar.(k)) 		
+		| MEconcat(k1,k2) -> tabvar.(fst eq) <- concat_value (tabvar.(k1),tabvar.(k2))
 		
 		
 		
