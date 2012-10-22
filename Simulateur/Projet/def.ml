@@ -2,6 +2,10 @@
 
 open Netlist_ast (* chargement des anciens types *)
 open Hashtbl
+(* type pour la gestion des options dans le main *) 
+type  moption = {mutable oprint : bool; mutable oschedule : bool;
+				mutable odebug : bool; mutable overbose : bool;
+				mutable osteps : int; mutable oclock : float;}
 (* principales differences:
 les variables sont toutes dans un tableau (entree, sorties, variables, 
 constantes)
@@ -36,7 +40,7 @@ type mprogram =
       mp_inputs : ident list;
       mp_outputs : ident list;
       mp_vars : ty Env.t; 
-      mp_tabvar : value vect ;
+      mp_tabvar : value array ;
       mp_special : application list;} (* contient une copie des registres, ... à traiter différemment *)
 
 (* id est du type string = ident.
@@ -85,7 +89,7 @@ let conversion_eq_to_application mp_special eq =
   match eq with
     | (s,Earg a) -> (key_of_ident s, MEarg (key_of_arg a))
     | (s,Ereg a) -> let resultat = (key_of_ident s, MEreg (key_of_ident a, ref(VBit false))) in
-                    mp_special = resultat :: (!mp_special);
+                    mp_special := resultat :: (!mp_special);
                     resultat
     | (s,Enot a) -> (key_of_ident s, MEnot (key_of_arg a))
     | (s,Ebinop (binop, a, b)) -> begin
@@ -126,9 +130,9 @@ let conversion_programme p =
   let mlist_special = ref([]) in
   let new_eqs = List.map (fun eq -> conversion_eq_to_application mlist_special eq) p.p_eqs in
   {  mp_eqs = new_eqs ;
-     mp_inputs = p.inputs;
-     mp_outputs = p.outputs;
+     mp_inputs = p.p_inputs;
+     mp_outputs = p.p_outputs;
      mp_vars  = p.p_vars; 
-     mp_tabvar = init_tableau ();
-     mp_special = !mlist_special; }
+     mp_tabvar = init_tableau;
+     mp_special = !mlist_special }
       
