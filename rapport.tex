@@ -2,18 +2,19 @@
 \usepackage[latin1]{inputenc} 
 \usepackage[T1]{fontenc}
 \usepackage[francais]{babel}
+\usepackage{verbatim}
 
-% Marc: ceci est un fichier latex.
-% Tu peut rajouter ce que tu veux entre les sections
-% Et Koliaza ou moi transformeront le fichier en pdf.
-% Si tu veux écrire aussi en latex, il te faudra apprendre sur internet plus en détail
-% Saches aussi que installer le package pour compiler le latex prend plus d'un Giga d'installation
+
+
 \author{Nicolas Blanchard, Axel Davy et Marc Heinrich}
 \title{Présentation de notre simulateur}
 \begin{document}
 \maketitle
 \section{Comment exécuter notre simulateur}
 	Pour executer le programme, simplement lancer ocamlbuild -use-menhir main.native, ce qui génère l'executable main.native que l'on peut lancer avec les options désirées.
+
+\emph{Remarque :} dû à notre méthode d'implémentation des registres, le résultat contenu dans les \verb!_sch.net! peut être un peu déroutant lorsque des registres sont présents. En effet les registres se retrouvent dans un ordre arbitraire à la fin du fichier. Notre implémentation des registres est qu'ils donnent leur sortie avant l'exécution des équations, et qu'ils prennent leur entrées à la fin. Voilà pourquoi l'ordre des registres n'a pas d'importance dans les \verb!_sch.net!.  
+
 \section{Fonctionnement}
 Le simulateur est articulé autour d'un main qui gère la liste des options et lance dans l'ordre les différentes étapes indépendantes :
 \begin{itemize}
@@ -32,7 +33,8 @@ syntaxe : main (options) filename
      \item {verbose : imprime à l'écran les sorties à chaque pas }
 \end{itemize}
 \section{Difficultés rencontrées}
-Après la première séance du TD, nous avions une fonction scheduler qui permettait de faire un tri topologique et de mettre ainsi dans l'ordre les instructions d'un fichier netlist source. Mais nous avons eu beaucoup de mal à avoir une fonction qui marche aussi pour les registres. En effet il faut que la fonction ne détecte pas de cycle combinatoire quand il y a une boucle causée par un registre. De plus si deux registres sont chacuns connectés à la sortie de l'autre, on ne peut en exécuter un avant l'autre. Nous avons donc décidés d'enlever les liaisons des registres dans le graphe du tri topologique, ainsi le tri se fait sans considérer les registres, se qui coupe les éventuels cycles combinatoire qui auraient été répérés à cause d'une boucle de registre. Nous avons aussi fait en sorte que les registres donnent leurs sorties au début de l'éxécution et capturent leur entrées à la fin de l'éxécution. Pour cela nous avons mis les registres dans un liste pour donner leur sortie au début de l'exécution et nous les avons mis à la fin de la liste à exécuter pour qu'ils puissent capturer leur entrée.
+Après la première séance du TD, nous avions une fonction scheduler qui permettait de faire un tri topologique et de mettre ainsi dans l'ordre les instructions d'un fichier netlist source. Mais nous avons eu beaucoup de mal à avoir une fonction qui marche aussi pour les registres. En effet il faut que la fonction ne détecte pas de cycle combinatoire quand il y a une boucle causée par un registre. De plus si deux registres sont chacuns connectés à la sortie de l'autre, on ne peut en exécuter un avant l'autre. Nous avons donc décidés d'enlever les liaisons des registres dans le graphe du tri topologique, ainsi le tri se fait sans considérer les registres, se qui coupe les éventuels cycles combinatoire qui auraient été répérés à cause d'une boucle de registre. Nous avons aussi fait en sorte que les registres donnent leurs sorties au début de l'exécution et capturent leur entrées à la fin de l'exécution. Pour cela nous avons mis les registres dans un liste pour donner leur sortie au début de l'exécution et nous les avons mis à la fin de la liste à exécuter pour qu'ils puissent capturer leur entrée.
+
 Comme le type ``programme'' était incomplet à notre goût on a crée un nouveau type Mprogramme : On souhaitait une liste des cas à traiter à part (comme les registres) et nous voulions que les équations soient composées de clés indiquant la valeur de leur arguments dans un tableau.
 
 
