@@ -115,7 +115,7 @@ let conversion_eq_to_application mp_special eq =
 
 
 (* hypothese : toutes les cles necessaires ont ete donnees*)
-let init_tableau =
+let init_tableau () =
   let t = Array.make (!lastkeygiven +1) (VBit false) in
   let lconst_restant = ref(!list_const) in
     while !lconst_restant <> [] do
@@ -133,6 +133,6 @@ let conversion_programme p =
      mp_inputs = p.p_inputs;
      mp_outputs = p.p_outputs;
      mp_vars  = p.p_vars; 
-     mp_tabvar = init_tableau;
+     mp_tabvar = init_tableau();
      mp_special = !mlist_special }
       
