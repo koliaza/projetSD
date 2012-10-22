@@ -95,21 +95,34 @@ let rec print_outputs tabvar = function
 		print_outputs tabvar q 
 	
 
+let type_to_string = function 
+	| TBit -> "(1 bit)"
+	| TBitArray(n) -> "(" ^ (string_of_int n) ^ " bit)"
+	
 (*fonction pour récupérer les inputs de l'utilisateur en mode pas à pas, il faut lui passer en argument
-la liste des inputs*)		
-let rec get_inputs tabvar = function 
+la liste des inputs, et l'environnement qui donne le type de chaque variable*)		
+let rec get_inputs tabvar env = function 
 	| [] -> ()
-	| t::q -> 
-		print_string ("valeur de l'entree "^t^" ? \n") ;
+	| var::q -> 
+		let t = Env.find var env in
+		print_string ("valeur de l'entree "^var^ (type_to_string t) ^" ? \n") ;
 		let s = read_line () in 
-		let v = Array.init (String.length s) (function i -> s.[i] = '1' ) in
-		tabvar.(key_of_ident t) <- VBitArray(v) ;
-		get_inputs tabvar q
+		begin
+		match t with 
+		| TBit when String.length s = 1 ->  tabvar.(key_of_ident var) <- VBit(s.[0] = '1')
+		| TBitArray(n) when String.length s = n -> 
+			let v = Array.init (String.length s) (function i -> s.[i] = '1' ) in
+			tabvar.(key_of_ident var) <- VBitArray(v) ;
+		| _ -> failwith "le nombre de bit passe en argument ne correspond pas a celui attendu"
+		end ;
+		get_inputs tabvar env q 
+;;
+			
 			
 
 		
 let rec execution_a_step mp m_option= 
-	get_inputs (mp.mp_tabvar) (mp.mp_inputs) ;
+	get_inputs (mp.mp_tabvar) mp.mp_vars (mp.mp_inputs) ;
 	List.iter (sortie_reg (mp.mp_tabvar)) (mp.mp_special) ; 
 (* mp_special ne contient que les registres jusqu'à maintenant *) 
 	List.iter (apply_eq (mp.mp_tabvar)) (mp.mp_eqs) ;
