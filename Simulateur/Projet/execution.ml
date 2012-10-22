@@ -16,7 +16,7 @@ let vopbin op = function
   | (VBit b1, VBit b2) -> VBit (op b1 b2)
   | (VBitArray v1, VBitArray v2) -> let n = Array.length v1 in
                                     if Array.length v2 = n
-                                    then VBitArray (Array.init n (fun i -> op v1.(i) v2.(i)))
+                                    then VBitArray (Array.init n (fun i -> (op (v1.(i)) (v2.(i)))))
                                     else failwith "tableaux de taille incompatible"
   | _ -> failwith "impossible d'opérer entre VBit et VBitArray"
 
@@ -31,24 +31,24 @@ let vmux = function
 	*)
 
 (*fonctions qui gèrent le cas particulier des registres*)			
-let rec entree_reg = function 
-	| (id, MEreg(k,k')) -> k' := init_tableau.(k)
+let rec entree_reg tabvar = function 
+	| (id, MEreg(k,k')) -> k' := tabvar.(k)
 	| _ -> failwith "la liste attendue ne doit comporter que des registres"
 	
-let rec sortie_reg = function 
-	| (id, MEreg(k,k')) -> init_tableau.(id) <- !k'
+let rec sortie_reg tabvar= function 
+	| (id, MEreg(k,k')) -> tabvar.(id) <- !k'
 	| _ -> failwith "la liste attendue ne doit comporter que des registres"
 
-let apply_eq eq = 
+let apply_eq tabvar eq = 
 	match snd (eq) with 
-		| MEarg(k) ->   init_tableau.(fst eq) <- init_tableau.(k)
-		| MEreg(_) ->  entree_reg eq ;
-		| MEnot(k) ->  init_tableau.(fst eq) <- vnot init_tableau.(k)
-		| MOr(k,k') ->  init_tableau.(fst eq) <- vor (init_tableau.(k),init_tableau.(k'))
-		| MAnd(k,k') ->  init_tableau.(fst eq) <- vand (init_tableau.(k),init_tableau.(k'))
-		| MNand(k,k') ->  init_tableau.(fst eq) <- vnand (init_tableau.(k),init_tableau.(k'))	
-		| MXor(k,k') ->  init_tableau.(fst eq) <- vxor (init_tableau.(k),init_tableau.(k'))
-		| MEmux(k,k1,k2) ->  init_tableau.(fst eq) <- vmux (init_tableau.(k),init_tableau.(k1),init_tableau.(k2))
+		| MEarg(k) ->   tabvar.(fst eq) <- tabvar.(k)
+		| MEreg(_) ->  entree_reg tabvar eq ;
+		| MEnot(k) ->  tabvar.(fst eq) <- vnot tabvar.(k)
+		| MOr(k,k') ->  tabvar.(fst eq) <- vor (tabvar.(k),tabvar.(k'))
+		| MAnd(k,k') ->  tabvar.(fst eq) <- vand (tabvar.(k),tabvar.(k'))
+		| MNand(k,k') ->  tabvar.(fst eq) <- vnand (tabvar.(k),tabvar.(k'))	
+		| MXor(k,k') ->  tabvar.(fst eq) <- vxor (tabvar.(k),tabvar.(k'))
+		| MEmux(k,k1,k2) ->  tabvar.(fst eq) <- vmux (tabvar.(k),tabvar.(k1),tabvar.(k2))
 		| MErom(_) -> failwith "non implémenté"
 		| MEram(_) -> failwith "non implémenté"
 		| MEslice(_) -> failwith "non implémenté"
@@ -58,48 +58,48 @@ let apply_eq eq =
 		
 		
 (*fonctions pour retourner à l'écran les valeurs des outputs*)
-let print_value k = 
+let print_value tabvar k = 
 	let i = key_of_ident k in 
 	begin
-	match init_tableau.(i) with 
+	match tabvar.(i) with 
 		| VBit(b) -> if b then print_int 1 else print_int 0 ;
 		| VBitArray(v) -> Array.iter (function b -> print_int (if b then 1 else 0)) v ; 
 	end ;
 	print_newline() 
 	
-let rec print_outputs = function 
+let rec print_outputs tabvar = function 
 	| [] -> () 
 	| t::q -> print_string (t^ " : ") ; 
-		print_value t ;
-		print_outputs q 
+		print_value tabvar t ;
+		print_outputs tabvar q 
 	
 
 (*fonction pour récupérer les inputs de l'utilisateur en mode pas à pas, il faut lui passer en argument
 la liste des inputs*)		
-let rec get_inputs = function 
+let rec get_inputs tabvar = function 
 	| [] -> ()
 	| t::q -> 
-		print_string ("valeur de l'entrée "^t^" ?) \n") ;
+		print_string ("valeur de l'entree "^t^" ? \n") ;
 		let n = ref (int_of_string ("0b" ^ (read_line ()))) in 
 		let v = if !n <=1 then VBit (!n = 1) 
 			else 
-			let l = ref [] in 
+			(let l = ref [] in 
 			while !n <> 0 do 
 			l := ((!n mod 2) = 1)::(!l) ;
 			n := !n / 2 ;
 			done ;
-		VBitArray (Array.of_list (List.rev !l))
-		in init_tableau.(key_of_ident t) <- v ;
-		get_inputs q
+		        VBitArray (Array.of_list (List.rev !l)) )
+		in tabvar.(key_of_ident t) <- v ;
+		get_inputs tabvar q
 			
 
 		
 let rec execution_a_step mp m_option= 
-	get_inputs (mp.mp_inputs) ;
-	List.iter sortie_reg (mp.mp_special) ; 
-(* Mp_special ne contient que les registres jusqu'à maintenant *) 
-	List.iter apply_eq (mp.mp_eqs) ;
-	if m_option.overbose then print_outputs (mp.mp_outputs) 
+	get_inputs (mp.mp_tabvar) (mp.mp_inputs) ;
+	List.iter (sortie_reg (mp.mp_tabvar)) (mp.mp_special) ; 
+(* mp_special ne contient que les registres jusqu'à maintenant *) 
+	List.iter (apply_eq (mp.mp_tabvar)) (mp.mp_eqs) ;
+	if m_option.overbose then print_outputs (mp.mp_tabvar) (mp.mp_outputs) 
 
 	
 let execution mp m_option = (* mp de type Mprogramme *) 
