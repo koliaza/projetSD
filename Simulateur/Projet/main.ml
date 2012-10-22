@@ -2,7 +2,7 @@
 (* definition des options *)
 open Def
 				
-let default = {oprint = false; oschedule = false; odebug = false;
+let default = {oprint = true; oschedule = false; odebug = false;
 			   overbose = false; osteps = -1; oclock = 1.}
 (* on modifie le default au fur et a mesure *)
 (*fin des options *)
