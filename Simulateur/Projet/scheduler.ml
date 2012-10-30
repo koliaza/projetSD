@@ -5,13 +5,13 @@ open List
 
 exception Combinational_cycle
  
-
-let read_exp eq = 
- let read_arg a = match a with
+let read_arg a = match a with
   | Avar(id) -> [id] 
   | _ -> [] 
- in 
-  let l = match snd eq with 
+
+
+let read_exp eq = 
+   let l = match snd eq with 
     | Earg(a) | Enot (a) -> read_arg a 
     | Ereg(a) -> [a]
     | Ebinop(a,b,c) -> (read_arg b)@(read_arg c)
@@ -23,16 +23,10 @@ let read_exp eq =
     | Eselect(a,b) -> read_arg b
   in l
 
-let rec enleve_element l lenleve =
- if l = [] then l
- else begin
- try 
-  List.find (function t -> (t = hd l)) lenleve;
-  enleve_element (tl l) lenleve
- with Not_found -> hd l ::(enleve_element (tl l) lenleve)
- end
-
-
+let rec enleve_element l lenleve = match l with 
+	| [] -> []
+	| t::q when List.mem (hd l) lenleve -> enleve_element q lenleve
+	| t::q -> t::(enleve_element q lenleve)
 
 
 let schedule p = 
@@ -44,7 +38,11 @@ let schedule p =
            match eq with
               |(a,Ereg(_)) -> liste_sortie_reg:= a :: !liste_sortie_reg    
 (* on ne met pas les liaisons des Registres car ils sont considérés à la fois comme des inputs et des portes qui ont une entrée.
-   ils seront traités au début (manuellement) et à la fin (car mis à la fin de p_eqs) de l'éxécution*)
+   ils seront traités au début (manuellement) et à la fin (car mis dans une liste à part) de l'éxécution*)
+			  |(a,Eram(_,_,ra,_,_,_)) -> List.iter (add_edge g a) (read_arg ra)  ;
+			  |(a,Erom(_,_,ra)) -> List.iter (add_edge g a) (read_arg ra) ;
+(*Pour les roms et la rams, il faut avoir juste calculé l'adresse de lecture avant de pouvoir donner la sortie. L'entrée est gérée à la fin,
+comme pour les registres*)
               |_ -> List.iter (add_edge g (fst eq)) (read_exp eq) 
       in
   List.iter (add_node g) vertex_liste ;

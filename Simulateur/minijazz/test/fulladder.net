@@ -1,0 +1,12 @@
+INPUT a, b, c
+OUTPUT s, r
+VAR
+  _l_10, _l_6, _l_8, _l_9, a, b, c, r, s
+IN
+r = OR _l_8 _l_10
+s = XOR _l_6 c
+_l_6 = XOR a b
+_l_8 = AND a b
+_l_9 = XOR a b
+_l_10 = AND _l_9 c
+
