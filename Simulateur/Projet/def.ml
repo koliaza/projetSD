@@ -27,8 +27,9 @@ type mconstructeur =
   | MEreg of int * (value ref)   (* reference sur la derniere valeur entree *)
   | MEnot of int
   | MEmux of int * int * int
-  | MErom of int * int * int 
-  | MEram of int * int * int * int * int * int
+  | MErom of int(*adr size*) * int(*word size*) * int (*read adr*)
+  | MEram of int(*adr size*) * int (*word size*)* int(*read adr*) 
+      * int (*write enable*)* int (*write adr*)* int (*data*)
   | MEconcat of int * int
   | MEslice of int * int * int
   | MEselect of int * int
@@ -41,7 +42,9 @@ type mprogram =
       mp_outputs : ident list;
       mp_vars : ty Env.t; 
       mp_tabvar : value array ;
-      mp_special : application list;} (* contient une copie des registres, ... à traiter différemment *)
+      mp_special : application list;
+      mp_tabram : value array ;
+      mp_tabrom : value array} (* contient une copie des registres, ... à traiter différemment *)
 
 (* id est du type string = ident.
 on place dans un table de hachage la cle donnee a id si elle n'existe pas deja.
@@ -125,6 +128,24 @@ let init_tableau () =
     done;
   t
 
+(*les deux fonctions pour initialiser les tableaux de ram et de roms ne 
+prennent pas en compte le cas où il y aurait plusieurs ram ou rom dans le 
+circuit*)
+
+let rec init_rom = function 
+  | [] -> [||]
+  | (_,MErom(ads,ws,_))::_ ->
+      Array.make (1 lsl ads) (VBitArray (Array.make ws false ))
+        (*il faudrait rajouter ici une fonction qui initialise correctement les 
+          valeurs dans la rom, en allant les chercher dans un fichier par ex *)
+  | _::q -> init_rom q
+
+let rec init_ram = function
+  | [] -> [||]
+  | (_,MEram(ads,ws,_,_,_,_))::_ ->  
+      Array.make (1 lsl ads) (VBitArray (Array.make ws false ))
+  | _::q -> init_ram q
+
 
 let conversion_programme p =
   let mlist_special = ref([]) in
@@ -134,5 +155,7 @@ let conversion_programme p =
      mp_outputs = p.p_outputs;
      mp_vars  = p.p_vars; 
      mp_tabvar = init_tableau();
-     mp_special = !mlist_special }
+     mp_special = !mlist_special;
+     mp_tabrom = init_rom new_eqs;
+     mp_tabram = init_ram new_eqs}
       
