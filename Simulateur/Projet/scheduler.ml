@@ -33,17 +33,16 @@ let schedule p =
   let gauche_liste =List.map (function eq -> fst eq) p.p_eqs in 
   let vertex_liste = p.p_inputs@gauche_liste in 
   let g = mk_graph() in 
-  let liste_sortie_reg_ram_rom = ref ([]) in
+  let liste_sortie_reg = ref ([]) in
 (* on ne met pas les liaisons des Registres car ils sont considérés à la fois comme des inputs et des portes qui ont une entrée.
    ils seront traités au début (manuellement) et à la fin (car mis dans une liste à part) de l'éxécution*)
 (*Pour les roms et la rams, il faut avoir juste calculé l'adresse de lecture avant de pouvoir donner la sortie. L'entrée est gérée à la fin,
 comme pour les registres*)
       let gestion_edge eq =
            match eq with
-              |(a,Ereg(_)) -> liste_sortie_reg_ram_rom:= a :: !liste_sortie_reg_ram_rom    
+              |(a,Ereg(_)) -> liste_sortie_reg:= a :: !liste_sortie_reg    
               |(a,Eram(_,_,ra,_,_,_))
-	      |(a,Erom(_,_,ra)) -> List.iter (add_edge g a) (read_arg ra) ;
-                              liste_sortie_reg_ram_rom:= a :: !liste_sortie_reg_ram_rom
+	      |(a,Erom(_,_,ra)) -> List.iter (add_edge g a) (read_arg ra) 
               |_ -> List.iter (add_edge g (fst eq)) (read_exp eq) 
       in
   List.iter (add_node g) vertex_liste ;
@@ -53,7 +52,7 @@ comme pour les registres*)
               | [] -> [] 
               | t::q -> (List.find (function eq -> fst eq = t) l_b)::(renvoyer_eq q l_b)
       in 
-  {p_eqs = renvoyer_eq ( (enleve_element (List.rev (topological g)) (p.p_inputs@(!liste_sortie_reg_ram_rom))) @ (!liste_sortie_reg_ram_rom) ) p.p_eqs;
+  {p_eqs = renvoyer_eq ( (enleve_element (List.rev (topological g)) (p.p_inputs@(!liste_sortie_reg))) @ (!liste_sortie_reg) ) p.p_eqs;
   p_inputs = p.p_inputs ;
   p_outputs = p.p_outputs ;
   p_vars = p.p_vars }
