@@ -30,14 +30,31 @@ let vmux = function
 	(en faisant une opération bit à bit sur les valeurs d'entrée par exemple?) 
 	*)
 
-(*fonctions qui gèrent le cas particulier des registres*)			
-let rec entree_reg tabvar = function 
-	| (id, MEreg(k,k')) -> k' := tabvar.(k)
-	| _ -> failwith "la liste attendue ne doit comporter que des registres"
 	
-let rec sortie_reg tabvar = function 
+(*fonction qui convertit une adresse donnée en VBitArray en indice dans le tableau tabram ou tabrom correspondant
+le bit de poinds faible est celui à l'indice 0 du tableau*)	
+let adr_to_int = function 
+	| VBit(b) -> if b then 1 else 0
+	| VBitArray(v) -> let k = ref 0 in 
+		for i = Array.length v -1 downto 0 do 
+			k := 2* !k + (if v.(i) then 1 else 0)
+		done ;
+		!k 
+		
+(*fonctions qui gèrent le cas particulier des memoires*)	
+let entree_mem p = function 
+	| (_, MEreg(k,k')) -> k' := p.mp_tabvar.(k) ;
+	| (_, MEram(_,_,_,we,wa,data)) -> let VBit(b) = p.mp_tabvar.(we) in 
+		if b then 
+		p.mp_tabram.(adr_to_int p.mp_tabvar.(wa)) <- p.mp_tabvar.(data)
+	| (_,MErom(_)) -> ()
+	| _ -> assert false
+		
+let sortie_reg tabvar = try function 
 	| (id, MEreg(k,k')) -> tabvar.(id) <- !k'
-	| _ -> failwith "la liste attendue ne doit comporter que des registres"
+	| (_,MErom(_)) | (_,MEram(_)) -> () ;
+	| _ -> assert false
+with _ -> failwith "" 
 
 let extraction_VBit n = function
   | (VBit b) -> if n = 0 then VBit b
@@ -59,23 +76,23 @@ let slice i j = function
 		VBitArray(v) 
 	| _ -> failwith "acces a un bit inexistant" 
 
-
-let apply_eq tabvar eq = 
+	
+let apply_eq p eq =
+	let tabvar = p.mp_tabvar in
 	match snd (eq) with 
 		| MEarg(k) ->   tabvar.(fst eq) <- tabvar.(k)
-		| MEreg(_) ->  entree_reg tabvar eq ;
+		| MEreg(k,k') -> ()
 		| MEnot(k) ->  tabvar.(fst eq) <- vnot tabvar.(k)
 		| MOr(k,k') ->  tabvar.(fst eq) <- vor (tabvar.(k),tabvar.(k'))
 		| MAnd(k,k') ->  tabvar.(fst eq) <- vand (tabvar.(k),tabvar.(k'))
 		| MNand(k,k') ->  tabvar.(fst eq) <- vnand (tabvar.(k),tabvar.(k'))	
 		| MXor(k,k') ->  tabvar.(fst eq) <- vxor (tabvar.(k),tabvar.(k'))
 		| MEmux(k,k1,k2) ->  tabvar.(fst eq) <- vmux (tabvar.(k),tabvar.(k1),tabvar.(k2))
-		| MErom(_) -> failwith "Erom non implémenté"
-		| MEram(_) -> failwith "Eram non implémenté"
+		| MErom(_,_,k) -> tabvar.(fst eq) <- p.mp_tabrom.(adr_to_int tabvar.(k))
+		| MEram(_,_,k,_,_,_) ->tabvar.(fst eq) <- p.mp_tabram.(adr_to_int tabvar.(k)) 
 		| MEslice(s1,s2,k) ->  tabvar.(fst eq) <- slice s1 s2 tabvar.(k)
 		| MEselect(n,k) -> tabvar.(fst eq) <- extraction_VBit n (tabvar.(k)) 		
-		| MEconcat(k1,k2) -> tabvar.(fst eq) <- concat_value (tabvar.(k1),tabvar.(k2))
-		
+		| MEconcat(k1,k2) -> tabvar.(fst eq) <- concat_value (tabvar.(k1),tabvar.(k2))	
 		
 		
 (*fonctions pour retourner à l'écran les valeurs des outputs*)
@@ -125,7 +142,7 @@ let rec execution_a_step mp m_option=
 	get_inputs (mp.mp_tabvar) mp.mp_vars (mp.mp_inputs) ;
 	List.iter (sortie_reg (mp.mp_tabvar)) (mp.mp_special) ; 
 (* mp_special ne contient que les registres jusqu'à maintenant *) 
-	List.iter (apply_eq (mp.mp_tabvar)) (mp.mp_eqs) ;
+	List.iter (apply_eq mp) (mp.mp_eqs) ;
 	if m_option.overbose then print_outputs (mp.mp_tabvar) (mp.mp_outputs) 
 
 	
