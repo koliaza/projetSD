@@ -1,9 +1,0 @@
-INPUT x
-OUTPUT s, r
-VAR
-  _l_4, r, s, x
-IN
-r = AND x s
-s = REG _l_4
-_l_4 = XOR x s
-
