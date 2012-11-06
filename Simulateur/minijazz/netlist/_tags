@@ -1,2 +1,0 @@
-true: use_menhir
-<*.byte>: use_unix
