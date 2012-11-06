@@ -1,12 +1,13 @@
 %{
 
+open Ident
 open Static
 open Ast
 open Location
 open Misc
 
 let fresh_param () =
-  SVar ("_n"^(Misc.gen_symbol ()))
+  mk_static_exp (SVar ("_n"^(Misc.gen_symbol ())))
 
 %}
 
@@ -55,11 +56,17 @@ const_dec:
 
 name: n=NAME { n }
 
+ident:
+  | n=name { ident_of_string n }
+
 type_ident: LBRACKET se=static_exp RBRACKET { TBitArray se }
+
+node_name:
+  | n=name { reset_symbol_table (); n }
 
 node_decs: ns=list(node_dec) { ns }
 node_dec:
-  inlined=inlined_status n=name p=params LPAREN args=args RPAREN
+  inlined=inlined_status n=node_name p=params LPAREN args=args RPAREN
   EQUAL out=node_out WHERE b=block probes=probe_decls END WHERE option(SEMICOL)
       { mk_node n (Loc ($startpos,$endpos)) inlined args out p b probes }
 
@@ -81,8 +88,8 @@ param:
 args: vl=slist(COMMA, arg) { vl }
 
 arg:
-  | n=NAME COLON t=type_ident { mk_var_dec n t }
-  | n=NAME { mk_var_dec n TBit }
+  | n=ident COLON t=type_ident { mk_var_dec n t }
+  | n=ident { mk_var_dec n TBit }
 
 block:
   | eqs=equs { BEqs (eqs, []) }
@@ -96,13 +103,14 @@ equ_tail:
 equ: p=pat EQUAL e=exp { mk_equation p e }
 
 pat:
-  | n=NAME                              { Evarpat n }
-  | LPAREN p=snlist(COMMA, NAME) RPAREN { Etuplepat p }
+  | n=ident                              { Evarpat n }
+  | LPAREN p=snlist(COMMA, ident) RPAREN { Etuplepat p }
 
-static_exp :
+static_exp: se=_static_exp { mk_static_exp ~loc:(Loc ($startpos,$endpos)) se }
+_static_exp :
   | i=INT { SInt i }
   | n=NAME { SVar n }
-  | LPAREN se=static_exp RPAREN { se }
+  | LPAREN se=_static_exp RPAREN { se }
   /*integer ops*/
   | se1=static_exp POWER se2=static_exp { SBinOp(SPower, se1, se2) }
   | se1=static_exp PLUS se2=static_exp { SBinOp(SAdd, se1, se2) }
@@ -136,17 +144,20 @@ _exp:
     { Ecall("slice", [low; high; fresh_param()], [e1]) }
   | e1=simple_exp LBRACKET low=static_exp DOTDOT RBRACKET
     { let n = fresh_param () in
-      let high = SBinOp(SMinus, n, SInt 1) in
+      let high = mk_static_exp (SBinOp(SMinus, n, mk_static_exp (SInt 1))) in
       Ecall("slice", [low; high; n], [e1]) }
   | e1=simple_exp LBRACKET DOTDOT high=static_exp RBRACKET
-    { Ecall("slice", [SInt 0; high; fresh_param()], [e1]) }
+    {
+      let params = [mk_static_exp (SInt 0); high; fresh_param ()] in
+      Ecall("slice", params, [e1])
+    }
   | ro=rom_or_ram LESS addr_size=static_exp
     COMMA word_size=static_exp input_file=tag_option(COMMA, STRING) GREATER a=exps
     { Emem(ro, addr_size, word_size, input_file, a) }
 
 simple_exp: e=_simple_exp { mk_exp ~loc:(Loc ($startpos,$endpos)) e }
 _simple_exp:
-  | n=NAME                    { Evar n }
+  | n=ident                   { Evar n }
   | LPAREN e=_exp RPAREN      { e }
 
 const:
@@ -170,5 +181,5 @@ call_params:
 
 probe_decls:
   | /*empty*/ { [] }
-  | PROBING l=separated_nonempty_list(COMMA, NAME) { l }
+  | PROBING l=separated_nonempty_list(COMMA, ident) { l }
 %%
