@@ -43,7 +43,7 @@ let adr_to_int = function
 		
 (*fonctions qui gèrent le cas particulier des memoires*)	
 let entree_mem p = function 
-	| (_, MEreg(k,k')) -> k' := p.mp_tabvar.(k) ;
+	| (_, MEreg(k,k')) -> ()
 	| (_, MEram(_,_,_,we,wa,data)) -> let VBit(b) = p.mp_tabvar.(we) in 
 		if b then 
 		p.mp_tabram.(adr_to_int p.mp_tabvar.(wa)) <- p.mp_tabvar.(data)
@@ -81,7 +81,7 @@ let apply_eq p eq =
 	let tabvar = p.mp_tabvar in
 	match snd (eq) with 
 		| MEarg(k) ->   tabvar.(fst eq) <- tabvar.(k)
-		| MEreg(k,k') -> ()
+		| MEreg(k,k') ->  k' := tabvar.(k) ;
 		| MEnot(k) ->  tabvar.(fst eq) <- vnot tabvar.(k)
 		| MOr(k,k') ->  tabvar.(fst eq) <- vor (tabvar.(k),tabvar.(k'))
 		| MAnd(k,k') ->  tabvar.(fst eq) <- vand (tabvar.(k),tabvar.(k'))
@@ -141,8 +141,9 @@ let rec get_inputs tabvar env = function
 let rec execution_a_step mp m_option= 
 	get_inputs (mp.mp_tabvar) mp.mp_vars (mp.mp_inputs) ;
 	List.iter (sortie_reg (mp.mp_tabvar)) (mp.mp_special) ; 
-(* mp_special ne contient que les registres jusqu'à maintenant *) 
+(* mp_special contient les MEreg, les MEram et les MErom *) 
 	List.iter (apply_eq mp) (mp.mp_eqs) ;
+        List.iter (entree_mem mp) (mp.mp_special) ;
 	if m_option.overbose then print_outputs (mp.mp_tabvar) (mp.mp_outputs) 
 
 	

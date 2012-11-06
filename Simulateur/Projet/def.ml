@@ -44,7 +44,7 @@ type mprogram =
       mp_tabvar : value array ;
       mp_special : application list;
       mp_tabram : value array ;
-      mp_tabrom : value array} (* contient une copie des registres, ... à traiter différemment *)
+      mp_tabrom : value array}
 
 (* id est du type string = ident.
 on place dans un table de hachage la cle donnee a id si elle n'existe pas deja.
@@ -107,10 +107,16 @@ let conversion_eq_to_application mp_special eq =
     (* attention : bien faire attention au fait que certaines fonctions
        ont des parametres entiers qui ne correspondront pas a une variable
        voir la definition de Erom, Eram, Eslice, Eselect *)
-    | (s,Erom (a, b, c)) -> (key_of_ident s, MErom (a, b, key_of_arg c))
-    | (s,Eram (a, b, c, d, e, f)) -> (key_of_ident s, MEram (a, b, 
+    | (s,Erom (a, b, c)) -> let resultat = (key_of_ident s, MErom (a, b, key_of_arg c))
+                            in
+                              mp_special := resultat :: (!mp_special);
+                              resultat
+    | (s,Eram (a, b, c, d, e, f)) -> let resultat = (key_of_ident s, MEram (a, b, 
                                      key_of_arg c, key_of_arg d,
                                      key_of_arg e, key_of_arg f))
+                                     in
+                                       mp_special := resultat :: (!mp_special);
+                                       resultat
     | (s,Econcat (a, b)) -> (key_of_ident s, MEconcat (key_of_arg a,
                                                       key_of_arg b))
     | (s,Eslice (a, b, c)) -> (key_of_ident s, MEslice (a, b, key_of_arg c))
