@@ -27,11 +27,11 @@ let option_list =
 	 "-romsize", Arg.Int  (fun x -> options.ramsize <- x),
 				 "Size (in word) of the rom array";
 	 "-raminspect", Arg.List (fun l -> options.ramlist <- l),
-				 "IntList of the ram adresses to follow"
-	 "-ramfile", Arg.String (fun s -> options.ram_file <- s)
-				 "adress of the ram file"
-	 "-romfile", Arg.String (fun s -> options.ram_file <- s)
-				 "adress of the rom file"
+				 "IntList of the ram addresses to follow";
+	 "-ramfile", Arg.String (fun s -> options.ram_file <- s),
+				 "address of the ram file";
+	 "-romfile", Arg.String (fun s -> options.ram_file <- s),
+				 "address of the rom file"
 				 ]
    
 let main_exec filename= 
