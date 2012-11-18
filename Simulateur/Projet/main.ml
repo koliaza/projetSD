@@ -21,17 +21,17 @@ let option_list =
 	 "-clock", Arg.Float (fun x -> options.oclock <- x),
                "clock speed to simulate";
 	 "-verbose", Arg.Unit (fun () -> options.overbose <- true),
-                 "print all the outputs"
+                 "print all the outputs";
 	 "-ramsize", Arg.Int  (fun x -> options.ramsize <- x),
 				 "Size (in word) of the ram array";
 	 "-romsize", Arg.Int  (fun x -> options.ramsize <- x),
 				 "Size (in word) of the rom array";
-	 "-raminspect", Arg.List (fun l -> options.ramlist <- l),
-				 "IntList of the ram adresses to follow"
-	 "-ramfile", Arg.String (fun s -> options.ram_file <- s)
-				 "adress of the ram file"
-	 "-romfile", Arg.String (fun s -> options.ram_file <- s)
-				 "adress of the rom file"
+	 "-ramfile", Arg.String (fun s -> options.ram_file <- s),
+				 "address of the ram file";
+	 "-romfile", Arg.String (fun s -> options.ram_file <- s),
+				 "address of the rom file"
+	 (*"-raminspect", Arg.List (fun l -> options.ramlist <- l),
+				 "IntList of the ram addresses to follow";*)
 				 ]
    
 let main_exec filename= 
@@ -47,8 +47,8 @@ let main_exec filename=
 			Netlist_printer.print_program out p; 
 			(* Netlist_printer est à modifier pour indiquer comment est traité le cas des registres *)
 		if not options.oschedule then (
-			let ram = Dataio.readram options in
-			let rom = Dataio.readrom options in
+			let ram = Dataio.read_ram options in
+			let rom = Dataio.read_rom options in
 			let mp = conversion_programme p in
 				 if options.odebug then
 				  Execution.exec_debug mp options ram rom  
