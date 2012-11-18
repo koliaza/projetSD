@@ -31,9 +31,9 @@ open Netlist_ast
 open Def
 
 let read_ram options = 
-Array.make options.ramsize VbitArray( [|false ; false ; false ; false ; 
+Array.make options.ramsize (VbitArray [|false ; false ; false ; false ; 
 										false ; false ; false ; false |] )
 										
 let read_rom options = 
-Array.make options.romsize VbitArray( [|false ; false ; false ; false ; 
+Array.make options.romsize (VbitArray [|false ; false ; false ; false ; 
 										false ; false ; false ; false |] )

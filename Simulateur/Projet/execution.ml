@@ -121,7 +121,7 @@ let rec print_ram ram l = match l with
 			Array.iter (function b -> print_int (if b then 1 else 0)) ram.(a);
 			print_newline();
 			print_ram b;
-			end;
+			end
 	
 (*fonction pour récupérer les inputs de l'utilisateur en mode pas à pas, il faut lui passer en argument
 la liste des inputs, et l'environnement qui donne le type de chaque variable*)		
@@ -140,9 +140,6 @@ let rec get_inputs tabvar env = function
 		| _ -> failwith "le nombre de bit passe en argument ne correspond pas a celui attendu"
 		end ;
 		get_inputs tabvar env q 
-;;
-			
-			
 
 		
 let rec execution_a_step mp m_option ram rom= 
