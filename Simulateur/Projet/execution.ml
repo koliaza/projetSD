@@ -95,7 +95,7 @@ let apply_eq p eq =
 		| MEconcat(k1,k2) -> tabvar.(fst eq) <- concat_value (tabvar.(k1),tabvar.(k2))	
 		
 		
-(*fonctions pour retourner à l'écran les valeurs des outputs*)
+(*fonctions pour retourner à l'écran les valeurs des outputs et ram*)
 let print_value tabvar k = 
 	let i = key_of_ident k in 
 	begin
@@ -111,10 +111,17 @@ let rec print_outputs tabvar = function
 		print_value tabvar t ;
 		print_outputs tabvar q 
 	
-
 let type_to_string = function 
 	| TBit -> "(1 bit)"
 	| TBitArray(n) -> "(" ^ (string_of_int n) ^ " bit)"
+
+let rec print_ram ram  = function	
+| [] -> ()
+| a::b -> begin 
+			Array.iter (function b -> print_int (if b then 1 else 0)) ram.(a);
+			print_newline();
+			print_ram ram b;
+			end
 	
 (*fonction pour récupérer les inputs de l'utilisateur en mode pas à pas, il faut lui passer en argument
 la liste des inputs, et l'environnement qui donne le type de chaque variable*)		
@@ -133,29 +140,28 @@ let rec get_inputs tabvar env = function
 		| _ -> failwith "le nombre de bit passe en argument ne correspond pas a celui attendu"
 		end ;
 		get_inputs tabvar env q 
-;;
-			
-			
 
 		
-let rec execution_a_step mp m_option= 
+let rec execution_a_step mp m_option ram rom= 
 	get_inputs (mp.mp_tabvar) mp.mp_vars (mp.mp_inputs) ;
 	List.iter (sortie_reg (mp.mp_tabvar)) (mp.mp_special) ; 
 (* mp_special contient les MEreg, les MEram et les MErom *) 
 	List.iter (apply_eq mp) (mp.mp_eqs) ;
         List.iter (entree_mem mp) (mp.mp_special) ;
-	if m_option.overbose then print_outputs (mp.mp_tabvar) (mp.mp_outputs) 
+	if m_option.overbose then print_outputs (mp.mp_tabvar) (mp.mp_outputs) ;
+	print_ram ram m_option.ramlist
+	
 
 	
-let execution mp m_option = (* mp de type Mprogramme *) 
+let execution mp m_option ram rom = (* mp de type Mprogramme *) 
 	
   if m_option.osteps  = -1 then 
     while(true) do
-      execution_a_step mp m_option
+      execution_a_step mp m_option ram rom
     done
   else 
    for i = 1 to m_option.osteps do
-     execution_a_step mp m_option
+     execution_a_step mp m_option ram rom
    done
    
 (*fonction pour demander à l'utilisateur s'il souhaite continuer*)
@@ -168,10 +174,10 @@ let rec ask_continue () =
 		| _ -> ask_continue () 
    
   (*fonction pour lancer la boucle du mode pas à pas*)
- let exec_debug mp m_option = 
+ let exec_debug mp m_option ram rom= 
 	m_option.overbose <- true;
 	while true do 
-		execution_a_step mp m_option;
+		execution_a_step mp m_option ram rom;
 		ask_continue () 
 	done 
 		
