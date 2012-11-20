@@ -19,11 +19,11 @@ les arguments peuvent être de la forme :
 ------ Registres
 
 AX et BX sont des registres 8 bits qui permettent toutes les opérations. AX sera particulièrement utilisé pour charger des entiers de la mémoire ou de constantes.
-RA est un registre 8 bits qui pointe l'instruction à exécuter au prochain tour
-SP est un registre 8 bits qui pointe le dessus de la pile
-FP est un registre 8 bits qui pointe le dessous de la pile
+PC est un registre 8 bits qui pointe l'instruction à exécuter au prochain tour
+RA est un registre 8 bits utilisé par jump and link (jal)
+SP et FP servent à gèrer la pile (registres 8 bits)
 FLAGS est un registre de quelques bits qui servira en interne à la gestion des sauts.
-
+PP : registre cible par défaut des différentes portes. 
 
 
 
@@ -48,6 +48,13 @@ AND reg1,reg2
 DIV reg1,reg2
   Division non signée: reg1 <- reg1 / reg2
   Si reg2 = 0 alors renvoie 11111111
+  
+DIVS reg1,reg2
+  Division signée: reg1 <- reg1 / reg2
+  Si reg2 = 0 alors renvoie 11111111
+
+JAL addr8 
+  saut à addr8 et sauvegarde de PC dans RA
   
 JE addr8 (equal)
   Saut à addr8 si FLAG.(0) est à 1, passe à la suite sinon.
@@ -76,8 +83,8 @@ JNE addr8 (not equal)
 LI int8
   Charge un entier 8 bits dans le registre AX
 
-LM addr8
-  Charge un entier 8 bits contenu dans la RAM à l'adresse addr8 dans AX.
+LW reg1,reg2
+  Charge un entier 8 bits contenu dans la RAM à l'adresse reg2 dans reg1.
   
 MUL reg1,reg2
   Multiplication non signée: reg1 <- reg1 * reg2
@@ -106,9 +113,10 @@ SHR reg1,reg2
 SRA reg1, reg2
   décale reg1 de reg2 bits vers la droite en ajoutant des bits égaux au bit de signe
   
-SW addr8
-  Ecrit le contenu de AX à l'adresse addr8 de la RAM
-     
+  
+SW reg1,reg2
+  Ecrit le contenu de reg2 à l'adresse reg1 de la RAM
+
 TEST reg1,reg2
   Fait un comparaison de reg1 et de reg2:
   FLAGS.(0) est assigné à 1 s'il y a égalité, 0 sinon.
@@ -163,11 +171,11 @@ SHL reg1,reg2
 SHR reg1,reg2
   décale reg1 de reg2 bits vers la droite
 
-SRA reg1, reg2
-  décale reg1 de reg2 bits vers la droite en ajoutant des bits égaux au bit de signe
-
 
 BRANCHEMENTS 8 opérations
+  
+JAL addr8 
+  saut à addr8 et sauvegarde de PC dans RA
   
 JE addr8 (equal)
   Saut à addr8 si FLAG.(0) est à 1, passe à la suite sinon.
@@ -200,14 +208,14 @@ INTERFACE MEMOIRE 4 opérations
 LI int8
   Charge un entier 8 bits dans le registre AX
 
-LM addr8
-  Charge un entier 8 bits contenu dans la RAM à l'adresse addr8 dans AX.
+LW reg1,reg2
+  Charge un entier 8 bits contenu dans la RAM à l'adresse reg2 dans reg1.
   
 (LA constante8)
    Sert à charger l'adresse d'une constante dans AX. Surcouche assembleur: fera en fait appel à LI.
 
-SW addr8
-Ecrit le contenu de AX à l'adresse addr8 de la RAM
+SW reg1,reg2
+Ecrit le contenu de reg2 à l'adresse reg1 de la RAM
 
 Implémentation :
 Décomposer une instruction 8 bits en 2 bits de catégorie, 1 bit de Signé/non et 5 bits d'instruction.

@@ -1,7 +1,7 @@
 
 
 Simulateur : 
-. Charger la ROM et la RAM  | Marc
+. Charger la ROM et la RAM / faire dataio.ml  | Marc
 .. Programme "Micro Assembleur" -> Fichier lisible ROM | On verra
 .. Convertisseur suite de nombre -> Fichier lisible RAM | 
 .. Fichier lisible RAM -> suite de nombre (hexa ou décimal) |

@@ -47,9 +47,10 @@ let main_exec filename=
 			Netlist_printer.print_program out p; 
 			(* Netlist_printer est à modifier pour indiquer comment est traité le cas des registres *)
 		if not options.oschedule then (
-			let ram = Dataio.read_ram options in
-			let rom = Dataio.read_rom options in
 			let mp = conversion_programme p in
+			let mp.tabram <- Dataio.read_ram options in
+			let mp.tabrom <- Dataio.read_rom options in
+		
 				 if options.odebug then
 				  Execution.exec_debug mp options ram rom  
 				else
