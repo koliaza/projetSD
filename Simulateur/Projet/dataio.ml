@@ -8,6 +8,8 @@ les deux fonctions doivent rendre un VbitArray Array.
 
 
 
+UTILISER LEXER_R.ML !
+
 
 
  let find_file filename =
