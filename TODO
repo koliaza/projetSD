@@ -6,8 +6,6 @@ Simulateur :
 .. Convertisseur suite de nombre -> Fichier lisible RAM | 
 .. Fichier lisible RAM -> suite de nombre (hexa ou décimal) |
 . Sauvegarder la RAM (..par tour(ask_continue) / à la fin ) | Axel
-. Lecture de l'heure à partir de paramètre de l'heure minute, ... dans la RAM à partir du suivi de cases | Koliaza 
-. Suivi de cases de RAM | Koliaza
 
 RQ: fichier lisible ROM/RAM:
 nombre_de_données taille_des_données 

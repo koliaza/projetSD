@@ -45,11 +45,11 @@ let main_exec filename=
         let p = Scheduler.schedule netp in
 		if options.oprint then
 			Netlist_printer.print_program out p; 
-			(* Netlist_printer est à modifier pour indiquer comment est traité le cas des registres *)
+			(* Netlist_printer est a modifier pour indiquer comment est traite le cas des registres *)
 		if not options.oschedule then (
 			let mp = conversion_programme p in
-			let mp.tabram <- Dataio.read_ram options in
-			let mp.tabrom <- Dataio.read_rom options in
+			 mp.mp_tabram <- Dataio.read_ram options; 
+			 mp.mp_tabrom <- Dataio.read_rom options;
 		
 				 if options.odebug then
 				  Execution.exec_debug mp options 

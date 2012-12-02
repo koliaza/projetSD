@@ -44,9 +44,12 @@ let adr_to_int = function
 (*fonctions qui gèrent le cas particulier des memoires*)	
 let entree_mem p = function 
 	| (_, MEreg(k,k')) -> ()
-	| (_, MEram(_,_,_,we,wa,data)) -> let VBit(b) = p.mp_tabvar.(we) in 
-		if b then 
+	| (_, MEram(_,_,_,we,wa,data)) -> begin
+      match p.mp_tabvar.(we) with
+        | VBit b -> if b then 
 		p.mp_tabram.(adr_to_int p.mp_tabvar.(wa)) <- p.mp_tabvar.(data)
+        |_ -> assert false
+    end
 	| (_,MErom(_)) -> ()
 	| _ -> assert false
 		
@@ -96,13 +99,18 @@ let apply_eq p eq =
 		
 		
 (*fonctions pour retourner à l'écran les valeurs des outputs et ram*)
+
+let print_cell tab a =
+ 
+  match tab.(a) with
+    |VBit v -> print_int (if v then 1 else 0)
+    |VBitArray v -> 
+			Array.iter (function b -> print_int (if b then 1 else 0)) v
+ 
+
 let print_value tabvar k = 
 	let i = key_of_ident k in 
-	begin
-	match tabvar.(i) with 
-		| VBit(b) -> if b then print_int 1 else print_int 0 ;
-		| VBitArray(v) -> Array.iter (function b -> print_int (if b then 1 else 0)) v ; 
-	end ;
+	print_cell tabvar i;
 	print_newline() 
 	
 let rec print_outputs tabvar = function 
@@ -115,14 +123,31 @@ let type_to_string = function
 	| TBit -> "(1 bit)"
 	| TBitArray(n) -> "(" ^ (string_of_int n) ^ " bit)"
 
-let rec print_ram ram  = function	
+
+
+
+let rec print_ram_list ram  = function	
 | [] -> ()
 | a::b -> begin 
-			Array.iter (function b -> print_int (if b then 1 else 0)) ram.(a);
+            print_cell ram a;
 			print_newline();
-			print_ram ram b;b 
-			end
+			print_ram_list ram b; 
+end
+
+let cell_value ram a = 
+
+  match ram.(a) with
+    |VBit v ->  (if v then -1 else -2)
+ (* arbitrary choices but the case shouldn't occur*)
+    |VBitArray v -> let f x b = if b then 2*x+1 else 2*x in 
+                    Array.fold_left f 0 v
+
+let print_time ram  hour minute second = 
+Printf.printf "%d:%d:%d\n"  (cell_value ram hour )
+  (cell_value ram minute )(cell_value ram second )
+
 	
+
 (*fonction pour récupérer les inputs de l'utilisateur en mode pas à pas, il faut lui passer en argument
 la liste des inputs, et l'environnement qui donne le type de chaque variable*)		
 let rec get_inputs tabvar env = function 
@@ -149,7 +174,7 @@ let rec execution_a_step mp m_option=
 	List.iter (apply_eq mp) (mp.mp_eqs) ;
         List.iter (entree_mem mp) (mp.mp_special) ;
 	if m_option.overbose then print_outputs (mp.mp_tabvar) (mp.mp_outputs) ;
-	print_ram mp.mp_tabram m_option.ramlist
+	print_ram_list mp.mp_tabram m_option.ramlist
 	
 
 	
