@@ -52,9 +52,9 @@ let main_exec filename=
 			let mp.tabrom <- Dataio.read_rom options in
 		
 				 if options.odebug then
-				  Execution.exec_debug mp options ram rom  
+				  Execution.exec_debug mp options 
 				else
-				  Execution.execution  mp options ram rom
+				  Execution.execution  mp options 
 			) 
 	  with        
 		| Scheduler.Combinational_cycle ->
