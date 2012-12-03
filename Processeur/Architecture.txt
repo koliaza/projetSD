@@ -1,3 +1,8 @@
+Description de l'architecture du processeur.
+
+Nicolas Blanchard - Axel Davy - Marc Heinrich 
+
+
 
 ------ Spécifications
 
@@ -13,28 +18,17 @@ les arguments peuvent être de la forme :
 
 
 
-
-
-
 ------ Registres
 
 AX et BX sont des registres 8 bits qui permettent toutes les opérations. AX sera particulièrement utilisé pour charger des entiers de la mémoire ou de constantes.
 PC est un registre 8 bits qui pointe l'instruction à exécuter au prochain tour
 RA est un registre 8 bits utilisé par jump and link (jal)
-SP et FP servent à gèrer la pile (registres 8 bits)
+SP et FP servent à gérer la pile (registres 8 bits)
 FLAGS est un registre de quelques bits qui servira en interne à la gestion des sauts.
 PP : registre cible par défaut des différentes portes. 
 
 
-
-
-
-
-
-
-
-
------- Instructions
+------ Liste de l'ensemble des instructions
 
 ADD reg1,reg2
   Addition non signée reg1 <- reg1 + reg2
@@ -217,16 +211,12 @@ LW reg1,reg2
 SW reg1,reg2
 Ecrit le contenu de reg2 à l'adresse reg1 de la RAM
 
+
+
+
+
+
 Implémentation :
 Décomposer une instruction 8 bits en 2 bits de catégorie, 1 bit de Signé/non et 5 bits d'instruction.
 Par ex : 00 = Logique, et And = 000001, d'où 00000001 = AND.
 01 = ARITH et ADD = 00001, d'où ADD = 01 0 00001 et ADDS = 01 1 00001
-ça permettra d'être plus clair si on doit débugger.
-
-
-Possibilités :
-rajouter un Jump and link, associé à un ou deux nouveaux registres, pour le link immédiat qui pourrait
-raccourcir vraiment le temps de calcul de certaines fonctions simples.
-
-Dangers :
-Voir comment gérer les registres FLAGS, pour éviter les problèmes de sauts alors qu'on ne devrait pas. (Quand les remet-on à zéro) 
