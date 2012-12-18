@@ -7,6 +7,10 @@ let str_en_construction = ref ""
 let length_str_en_construction = ref 0
 let tab_res = ref ([|0|])
 let deja_parcouru = ref 0
+
+let bool_of_int i=
+if i = 0 then false
+else true
 }
 
 
@@ -32,11 +36,20 @@ and contenu =
               if (!length_str_en_construction = !numbersize) then 
                 begin
                   length_str_en_construction := 0;
-                  tab_res(!deja_parcouru ) <- int_of_string ("0b"^!str_en_construction);
+                  tab_res(!deja_parcouru ) <- bool_of_int( int_of_string ("0b"^!str_en_construction) );
                   str_en_construction := "";
                   deja_parcouru := !deja_parcouru+1;
                   if (!deja_parcouru = !size) 
-                     then (!size,!numbersize,!tab_res)
+                     then begin 
+			let rsize = !size and rnumbersize = !numbersize and tr = !tab_res in 
+			 size:= 0;
+			 numbersize := 0;
+			 tab_res := [|0|];
+			 str_en_construction := "";
+			 length_str_en_construction := 0;
+			 deja_parcouru:= 0;
+			(!size,!numbersize,!tab_res)
+			end
                   else contenu lexbuf;
                end
               else contenu lexbuf;
