@@ -46,8 +46,8 @@ type mprogram =
       mp_vars : ty Env.t; 
       mp_tabvar : value array ;
       mp_special : application list;
-      mp_tabram : mutable value array ;
-      mp_tabrom : mutable value array}
+      mutable mp_tabram : value array ;
+      mutable mp_tabrom : value array}
 
 (* id est du type string = ident.
 on place dans un table de hachage la cle donnee a id si elle n'existe pas deja.
