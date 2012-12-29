@@ -1,0 +1,18 @@
+(* J'ai testé les fonctions *)
+
+not8(a:[8]) = (s:[8]) where
+  s = not(a[0]).not(a[1]).not(a[2]).not(a[3]).not(a[4]).not(a[5]).not(a[6]).not(a[7])
+end where 
+
+
+and8(a:[8],b:[8]) = (s:[8]) where
+s = (a[0] and b[0]).(a[1] and b[1]).(a[2] and b[2]).(a[3] and b[3]).(a[4] and b[4]).(a[5] and b[5]).(a[6] and b[6]).(a[7] and b[7])
+end where 
+
+or8(a:[8],b:[8]) = (s:[8]) where
+s = (a[0] or b[0]).(a[1] or b[1]).(a[2] or b[2]).(a[3] or b[3]).(a[4] or b[4]).(a[5] or b[5]).(a[6] or b[6]).(a[7] or b[7])
+end where 
+
+xor8(a:[8],b:[8]) = (s:[8]) where
+s = (a[0] xor b[0]).(a[1] xor b[1]).(a[2] xor b[2]).(a[3] xor b[3]).(a[4] xor b[4]).(a[5] xor b[5]).(a[6] xor b[6]).(a[7] xor b[7])
+end where 
