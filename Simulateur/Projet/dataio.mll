@@ -5,6 +5,12 @@ open Lexing
 exception Lexing_error of string
 let v = ref [||]
 let word_size = ref 0 
+
+let tonewline lexbuf =
+    let pos = lexbuf.lex_curr_p in
+    lexbuf.lex_curr_p <- 
+      { pos with pos_lnum = pos.pos_lnum + 1; pos_bol = pos.pos_cnum }
+
 }
 
 
@@ -25,11 +31,14 @@ rule header = parse
    
 and contenu i = parse
 	| bin* as b {	
-		if (i >= Array.length (!v)) then raise (Lexing_error "too much words") ;
+		(*if (i >= Array.length (!v)) then raise (Lexing_error "too much words") ;*)
 		if (String.length b <> !word_size) then raise (Lexing_error "invalid word") ;
 		(!v).(i) <- VBitArray (Array.init (String.length b) (fun j -> b.[j] = '1')) ;
-		contenu (i+1) lexbuf
+		if (i+1 = Array.length (!v)) then ()
+		else contenu (i+1) lexbuf
                 }
+	|newline {tonewline lexbuf; contenu i lexbuf}
+	|space {contenu i lexbuf}
 	| eof {if (i < Array.length !v) then raise (Lexing_error "missing words")}
 	| _ as c  { raise (Lexing_error ("illegal character: " ^ String.make 1 c)) }             
 

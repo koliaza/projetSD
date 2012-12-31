@@ -5,7 +5,7 @@ Simulateur :
 .. Programme "Micro Assembleur" -> Fichier lisible ROM | On verra
 .. Convertisseur suite de nombre -> Fichier lisible RAM | 
 .. Fichier lisible RAM -> suite de nombre (hexa ou décimal) |
-. Sauvegarder la RAM (..par tour(ask_continue) / à la fin ) | Axel
+. Sauvegarder la RAM (..par tour(ask_continue) / à la fin ) | Axel: Est-ce vraiment important? Si on en a besoin, je le fais. (Axel)
 
 RQ: fichier lisible ROM/RAM:
 nombre_de_données taille_des_données 
