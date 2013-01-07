@@ -48,9 +48,15 @@ let main_exec filename=
 			(* Netlist_printer est a modifier pour indiquer comment est traite le cas des registres *)
 		if not options.oschedule then (
 			let mp = conversion_programme p in
+			begin try 
 			 mp.mp_tabram <- Dataio.read_ram options; 
+			with Sys_error _ -> Format.eprintf "no ram loaded\n"
+			end ;
+			begin try
 			 mp.mp_tabrom <- Dataio.read_rom options;
-		
+			with Sys_error _ -> Format.eprintf "no rom loaded\n"
+			end ;
+
 				 if options.odebug then
 				  Execution.exec_debug mp options 
 				else
