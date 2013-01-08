@@ -1,0 +1,49 @@
+
+
+
+
+compare<n> (a:[n], b:[n]) = (o:[2]) where (* non signé*)
+	if n=0 then 
+	o = 0b11;
+	else 
+		o1=compare<n-1>(a[0..n-2],b[0..n-2]);
+		o =mux((a[n-1]^b[n-1]),0,o1[0]) . mux((a[n-1]^b[n-1]),a[n-1],o1[1]);
+
+	end if
+end where
+
+comparesigned <n> (a:[n], b:[n]) = (o:[2]) where 
+		o1 = compare<n-1>(a[0..n-2],b[0..n-2]);
+		o =mux((a[n-1]^b[n-1]),0,o1[0]) . mux((a[n-1]^b[n-1]),b[n-1],o1[1]);
+	
+end where
+
+main(a:[8],b:[8]) = (o:[2]) where
+o = shiftr<8>(a,b)
+end where 
+
+
+
+addzero<n>
+
+shiftr8 (a:8, b:8) = (c:8) where
+	d= mux8 (b[2], 0b0000.a[0..3],a)
+	e= mux8 (b[1], 0b00 . d[0..5], d)
+	f= mux8 (b[0], 0b0 . e[0..6], e)
+	c= mux8 (b[3]+b[4]+b[5]+b[6]+b[7], 0b00000000, f) 
+end where
+
+shiftl8 (a:8, b:8) = (c:8) where
+	d= mux8 (b[2], a[4..7].0b0000,a)
+	e= mux8 (b[1], d[2..7].0b00  , d)
+	f= mux8 (b[0], e[1..7].0b0, e)
+	c= mux8 (b[3]+b[4]+b[5]+b[6]+b[7], 0b00000000, f) 
+end where
+		
+
+sla8  (a:8, b:8) = (c:8) where
+	d= mux8 (b[2],  a[4..7].a[7].a[7].a[7].a[7],a)
+	e= mux8 (b[1], d[2..7].a[7] .a[7], d)
+	f= mux8 (b[0], e[1..7].a[7], e)
+	c= mux8 (b[3]+b[4]+b[5]+b[6]+b[7], a[7].a[7].a[7].a[7].a[7].a[7].a[7].a[7], f) 
+end where

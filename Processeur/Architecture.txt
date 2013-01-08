@@ -13,7 +13,7 @@ Codés par:
 les arguments peuvent être de la forme :
   .reg reg (4 bits pour chaque registre)
   .reg vide (4 bits pour le registre et 4 pour vide)
-  .entier 8 bits
+  .entier 8 bits poids faibles en 0
 
 
 
@@ -26,6 +26,10 @@ RA est un registre 8 bits utilisé par jump and link (jal)
 SP et FP servent à gérer la pile (registres 8 bits)
 FLAGS est un registre de quelques bits qui servira en interne à la gestion des sauts.
 PP : registre cible par défaut des différentes portes. 
+AX : 000(_)
+BX : 001(_)
+RA : 111(_)
+
 
 
 ------ Liste de l'ensemble des instructions
@@ -104,10 +108,9 @@ SHL reg1,reg2
 SHR reg1,reg2
   décale reg1 de reg2 bits vers la droite
   
-SRA reg1, reg2
-  décale reg1 de reg2 bits vers la droite en ajoutant des bits égaux au bit de signe
-  
-  
+SLA reg1, reg2
+  décale reg1 de reg2 bits vers la gauche en ajoutant des bits égaux au bit de signe
+
 SW reg1,reg2
   Ecrit le contenu de reg2 à l'adresse reg1 de la RAM
 
@@ -160,11 +163,13 @@ OR reg1,reg2
   OU logique reg1 <- reg1 or reg2
    
 SHL reg1,reg2
-  décale reg1 de reg2 bits vers la gauche
+  décale reg1 de reg2 bits vers la gauche et le met dans reg1
   
 SHR reg1,reg2
   décale reg1 de reg2 bits vers la droite
 
+SLA reg1, reg2
+  décale reg1 de reg2 bits vers la gauche en ajoutant des bits égaux au bit de signe
 
 BRANCHEMENTS 8 opérations
   
@@ -193,7 +198,12 @@ JNE addr8 (not equal)
   Saut à addr8 si FLAG.(0) est à 0, passe à la suite sinon.
      
 TEST reg1,reg2
-  Fait un comparaison de reg1 et de reg2:
+  Fait un comparaison de reg1 et de reg2: (non signée)
+  FLAGS.(0) est assigné à 1 s'il y a égalité, 0 sinon.
+  FLAGS.(1) est assigné à 1 si reg1 >= reg2, 0 sinon
+
+TESTS reg1,reg2
+  Fait un comparaison de reg1 et de reg2: (signée)
   FLAGS.(0) est assigné à 1 s'il y a égalité, 0 sinon.
   FLAGS.(1) est assigné à 1 si reg1 >= reg2, 0 sinon
 
@@ -210,7 +220,7 @@ LW reg1,reg2
 
 SW reg1,reg2
 Ecrit le contenu de reg2 à l'adresse reg1 de la RAM
-
+(ordre inversé par l'assembleur SW reg2,reg1)
 
 
 
@@ -220,3 +230,11 @@ Implémentation :
 Décomposer une instruction 8 bits en 2 bits de catégorie, 1 bit de Signé/non et 5 bits d'instruction.
 Par ex : 00 = Logique, et And = 000001, d'où 00000001 = AND.
 01 = ARITH et ADD = 00001, d'où ADD = 01 0 00001 et ADDS = 01 1 00001
+
+
+1er bit : arith ou non
+2e bit : logique | memoire
+3e bit : signee | 
+4e bit / 5e bit / 6e bit/ 7e: table
+7e bit 8e ?
+

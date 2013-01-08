@@ -1,0 +1,9 @@
+
+not8(a:[8]) = (s:[8]) where
+  s = not(a[0]).not(a[1]).not(a[2]).not(a[3]).not(a[4]).not(a[5]).not(a[6]).not(a[7])
+end where 
+
+main (a:[8]) = (s:[8]) where
+s = not8(a)
+
+end where

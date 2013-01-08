@@ -1,0 +1,61 @@
+
+
+
+main() = () where 
+	(* variables déjà définies : ax, bx, sp, fp, flags, pp, ra, pc, *)  
+instr = rom<8,16>(pc)
+instruction = instr[0..7] 
+argument_8bit = instr[8..15]
+argument_4bit_1 = argument_8bit[0..3]
+argument_4bit_2 = argument_8bit[4..7]
+is_arith = instruction[0]
+is_memoire = instruction[1]
+2_bit = instruction [3..4]
+4_bit = instruction [3..6]
+
+
+sortie_bloc_registre = bloc_registre(need_write_arg1,mux4(is_jal,0b1111 , mux4(is_li,0b0000,argument_4bit_1)),argument_4bit_2,res_a_ecrire_eventuellement)
+reg1 = sortie_bloc_registre[0..7]
+reg2 = sortie_bloc_registre[8..15]
+res_alu = alu(reg1,reg2,instruction[1..7])
+
+
+(* rq: vrai si is_memoire = 0 *)
+is_jal = isequal4(4_bit,0b0111) 
+is_je =  isequal4(4_bit,0b0110)
+is_jl =  isequal4(4_bit,0b0101)
+is_jle = isequal4(4_bit,0b0100)
+is_jm = isequal4(4_bit,0b0011)
+is_jme = isequal4(4_bit,0b0010)
+is_jmp = isequal4(4_bit,0b0001)
+is_jne = isequal4(4_bit,0b0000
+is_test = isequal4(4_bit,0b1000)
+is_tests = isequal4(4_bit,0b1000)
+
+
+(* rq: vrai si is_memoire = 1 *)
+is_li = isequal2(2_bit,0b11)
+is_lw = isequal2(2_bit,0b10)
+is_sw = isequal2(2_bit,0b01)
+
+res_intermediaire_load = mux8(is_li,argument_8bit,ram<8,8>(reg2,0,0,0)) 
+temp = ram<8,8>(reg1,is_sw,reg1,reg2)
+
+
+flags  = reg ( mux2(is_test,compare(reg1,reg2),mux2(is_tests,compare_signee(reg1,reg2),flags)))
+(*addr_jump = argument_8bit*) 
+will_jump = not(is_arith) and not(is_memoire) and mux(is_jal or is_jmp, 1, mux (is_je, flags[0], 1, mux ( is_jl, not(flags[1]), mux( is_jle, flags[0] or (not flags[1]), mux (is_jm, flags[1] and (not(flags[0])), mux (is_jme, flags[1], mux(is_jne, not(flags[0]), 0)      )      )        )      )   )  
+
+pc_plus_1 = adder8(pc,0b10000000)
+
+
+res_a_ecrire_eventuellement = mux8(is_jal,pc_plus_1,mux8(is_li or is_lw, res_intermediaire_load, res_alu) )
+need_write_arg1 = is_arith or is_li or is_lw or is_jal
+
+
+
+pc = reg8(1,mux8(will_jump,argument_8bit,pc_plus_1) )
+
+
+end where
+

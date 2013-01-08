@@ -158,6 +158,7 @@ let rec init_ram = function
 
 let conversion_programme p =
   let mlist_special = ref([]) in
+  let () = List.iter (fun inp -> let _ = key_of_ident inp in () ) p.p_inputs in
   let new_eqs = List.map (fun eq -> conversion_eq_to_application mlist_special eq) p.p_eqs in
   {  mp_eqs = new_eqs ;
      mp_inputs = p.p_inputs;
