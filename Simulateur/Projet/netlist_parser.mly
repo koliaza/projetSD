@@ -1,26 +1,13 @@
 %{
  open Netlist_ast
 
- let value_of_int n =
-   let rec aux n =
-     let b =
-       match n mod 10 with
-         | 0 -> false
-         | 1 -> true
-         | i -> Format.eprintf "Unexpected: %d@." i; raise Parsing.Parse_error
-     in
-     if n < 10 then
-       [b]
-     else
-       b::(aux (n / 10))
-   in
-   match aux n with
-     | [] -> Format.eprintf "Empty list@."; raise Parsing.Parse_error
-     | [b] -> VBit b
-     | bl -> VBitArray (Array.of_list (List.rev bl))
+ let value_of_string s =
+   if String.length s = 1 then VBit (s.[0] = '1')
+   else VBitArray (Array.init (String.length s) (fun i -> s.[i] = '1'))
+
 %}
 
-%token <int> INT
+%token <string> INT
 %token <string> NAME
 %token AND MUX NAND OR RAM ROM XOR REG NOT
 %token CONCAT SELECT SLICE
@@ -50,21 +37,21 @@ exp:
   | XOR x=arg y=arg { Ebinop(Xor, x, y) }
   | MUX x=arg y=arg z=arg { Emux(x, y, z) }
   | ROM addr=INT word=INT ra=arg
-    { Erom(addr, word, ra) }
+    { Erom(int_of_string addr,int_of_string word, ra) }
   | RAM addr=INT word=INT ra=arg we=arg wa=arg data=arg
-    { Eram(addr, word, ra, we, wa, data) }
+    { Eram(int_of_string addr, int_of_string word, ra, we, wa, data) }
   | CONCAT x=arg y=arg
      { Econcat(x, y) }
   | SELECT idx=INT x=arg
-     { Eselect (idx, x) }
+     { Eselect (int_of_string idx, x) }
   | SLICE min=INT max=INT x=arg
-     { Eslice (min, max, x) }
+     { Eslice (int_of_string min,int_of_string max, x) }
 
 arg:
-  | n=INT { Aconst (value_of_int n) }
+  | n=INT { Aconst (value_of_string n) }
   | id=NAME { Avar id }
 
 var: x=NAME ty=ty_exp { (x, ty) }
 ty_exp:
   | /*empty*/ { TBit }
-  | COLON n=INT { TBitArray n }
+  | COLON n=INT { TBitArray (int_of_string n) }

@@ -1,0 +1,174 @@
+(*bloc pour la gestion des registres.*)
+
+(*mux et démux, utiles éventuellements pour d'autres choses aussi*)
+
+nmux<n>(c,a:[n],b:[n]) = (o:[n]) where
+	if n = 0 
+	then o = [] ;
+	else
+		o = mux(c,a[0],b[0]) . nmux<n-1>(c,a[1..],b[1..]) ;
+	end if
+end where
+
+mux8 (c,a:[8],b:[8]) = (o:[8]) where 
+	o = nmux<8>(c,a,b)
+end where
+	
+	
+demux<n>(adress:[n],input) = (o:[2^n]) where
+	if n = 0 
+	then
+		o = input ;
+	else 
+		i1 = input & adress[n-1] ;
+		i2 = input & (not (adress[n-1])) ;
+		o = demux<n-1>(adress[..n-2],i1) . demux<n-1>(adress[..n-2],i2) ;
+	end if 
+end where
+
+multi_mux<m,n>(adress:[n],input:[m*2^n]) = (o:[m]) where
+	if n = 0 
+	then 
+		o = input ;
+	else 
+		i1 = multi_mux<m,n-1>(adress[..n-2],input[..(m*(2^(n-1)))-1]) ;
+		i2 = multi_mux<m,n-1>(adress[..n-2],input[m*2^(n-1)..]) ;
+		o = nmux<m>(adress[n-1],i1,i2) ;
+	end if
+end where
+	
+(*registres*)	
+mem_reg(write_enable,in) = o where 
+	input = mux(write_enable,in,o) ;
+	o = reg(input) ;
+end where
+	
+reg8 (write_enable,in:[8]) = (out:[8]) where 
+	out = mem_reg(write_enable,in[0]).mem_reg(write_enable,in[1]).mem_reg(write_enable,in[2]).mem_reg(write_enable,in[3]).
+		mem_reg(write_enable,in[4]).mem_reg(write_enable,in[5]).mem_reg(write_enable,in[6]).mem_reg(write_enable,in[7]) ;
+end where
+
+
+bloc_registre(write_enable,adress_1:[3],adress_2:[3],in:[8]) = (out:[16]) where 
+(*remarque : on a deux registres en sortie pour les opérations, donc out sur 16 bits*)
+	w_e = demux<3>(adress_1,write_enable) ;
+reg_0 = reg8(w_e[0],in) ; 
+reg_1 = reg8(w_e[1],in) ; 
+reg_2 = reg8(w_e[2],in) ; 
+reg_3 = reg8(w_e[3],in) ; 
+reg_4 = reg8(w_e[4],in) ; 
+reg_5 = reg8(w_e[5],in) ; 
+reg_6 = reg8(w_e[6],in) ; 
+reg_7 = reg8(w_e[7],in) ; 
+all_reg = reg_0 . reg_1 . reg_2 . reg_3 . reg_4 . reg_5 . reg_6 . reg_7   ;
+out = multi_mux<8,3>(adress_1,all_reg) . multi_mux<8,3>(adress_2,all_reg)
+end where
+
+
+
+
+
+
+
+
+
+
+
+
+
+ndiff<n>(a:[n],b:[n]) = (c) where
+	if n = 0 
+	then c = 0 ;
+	else
+		c = (a[0]^b[0]) or ndiff<n-1>(a[1..],b[1..]) ;
+	end if
+end where
+
+
+isqual<n>(a:[n],b:[n]) = (c) where
+	c= not(ndiff<n>(a,b));
+end where
+
+fulladder(a,b,c) = (s, r) where
+  s = (a ^ b) ^ c;
+  r = (a & b) + ((a ^ b) & c);
+end where
+
+adder8<n>(a:[8], b:[8], c_in) = (o:[n], c_out) where
+  if n = 0 then
+    o = [];
+    c_out = 0
+  else
+    (s_n1, c_n1) = adder8<n-1>(a, b, c_in);
+    (s_n, c_out) = fulladder(a[n-1], b[n-1], c_n1);
+    o = s_n1 . s_n
+  end if
+end where
+
+
+not8(a:[8]) = (s:[8]) where
+  s = not(a[0]).not(a[1]).not(a[2]).not(a[3]).not(a[4]).not(a[5]).not(a[6]).not(a[7])
+end where 
+
+
+and8(a:[8],b:[8]) = (s:[8]) where
+s = (a[0] and b[0]).(a[1] and b[1]).(a[2] and b[2]).(a[3] and b[3]).(a[4] and b[4]).(a[5] and b[5]).(a[6] and b[6]).(a[7] and b[7])
+end where 
+
+or8(a:[8],b:[8]) = (s:[8]) where
+s = (a[0] or b[0]).(a[1] or b[1]).(a[2] or b[2]).(a[3] or b[3]).(a[4] or b[4]).(a[5] or b[5]).(a[6] or b[6]).(a[7] or b[7])
+end where 
+
+xor8(a:[8],b:[8]) = (s:[8]) where
+s = (a[0] xor b[0]).(a[1] xor b[1]).(a[2] xor b[2]).(a[3] xor b[3]).(a[4] xor b[4]).(a[5] xor b[5]).(a[6] xor b[6]).(a[7] xor b[7])
+end where 
+
+nand8(a:[8],b:[8]) = (s:[8]) where
+s = not8(and8(a,b)) 
+end where 
+
+
+mux8(m,a:[8],b:[8]) = (s:[8]) where
+  s = mux(m,a[0],b[0]).mux(m,a[1],b[1]).mux(m,a[2],b[2]).mux(m,a[3],b[3]).mux(m,a[4],b[4]).mux(m,a[5],b[5]).mux(m,a[6],b[6]).mux(m,a[7],b[7])
+end where
+
+test(a:[8],b:[8]) = (o:[2]) where 
+(*TODO*)
+o = 0b00 ;
+end where
+
+mult(a:[8],b:[8]) = (o:[8]) where 
+(*TODO*)
+o = 0b00000000
+end where
+
+alu(a:[8],b:[8],config:[8]) = (s:[8]) where 
+  na = not8(a);
+  nb = not8(b);
+  entree_adder1 = a ; 
+  entree_adder2 = mux8(config[7],nb,b) ;
+  (sortie_adder,inutile) = adder8<8>(entree_adder1,entree_adder1,config[7]) ;
+  sortie_mult = mult(a,b) ;
+  
+
+  sortie_arith = mux8(config[2],sortie_adder,sortie_mult) ;
+  sortie_and = and8(a,b) ; 
+
+  sortie_or = or8(a,b) ;
+  sortie_xor = xor8(a,b) ;
+  sortie_nand = nand8(a,b) ;
+  zero8 = 0b00000000 ;
+  allsorties = sortie_and . sortie_or . sortie_xor . sortie_nand . na . zero8 . zero8 . zero8 ;
+  sortie_logique = multi_mux<8,3>(config[2..4],allsorties) ;
+  
+  sortie_test = test(a,b) . 0b000000 ;
+  
+  s = multi_mux<8,2>(config[0..1],sortie_arith . sortie_logique . sortie_test . zero8) ;
+
+
+end where
+
+main(a:[8],b:[8],c:[8]) = (s:[8]) where 
+	s = alu(a,b,c) ; 
+
+end where
