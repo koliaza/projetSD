@@ -24,8 +24,6 @@ end where
 
 
 
-addzero<n>
-
 shiftr8 (a:8, b:8) = (c:8) where
 	d= mux8 (b[2], 0b0000.a[0..3],a)
 	e= mux8 (b[1], 0b00 . d[0..5], d)
@@ -47,3 +45,53 @@ sla8  (a:8, b:8) = (c:8) where
 	f= mux8 (b[0], e[1..7].a[7], e)
 	c= mux8 (b[3]+b[4]+b[5]+b[6]+b[7], a[7].a[7].a[7].a[7].a[7].a[7].a[7].a[7], f) 
 end where
+
+
+
+
+multiplier8 (a:8, b:8) = (c:8, c_out) where
+	(c1,c1_out) = adder8(0b00000000, mux8(a[0],b,0b00000000), 0);
+	(c2,c2_out) = adder8(c1, mux8(a[1],0.b[0..6],0b00000000), 0);
+	(c3,c3_out) = adder8(c2, mux8(a[2],0b00.b[0..5],0b00000000), 0);
+	(c4,c4_out) = adder8(c3, mux8(a[3],0b000.b[0..4],0b00000000), 0);
+	(c5,c5_out) = adder8(c4, mux8(a[4],0b0000.b[0..3],0b00000000), 0);
+	(c6,c6_out) = adder8(c5, mux8(a[5],0b00000.b[0..2],0b00000000), 0);
+	(c7,c7_out) = adder8(c6, mux8(a[6],0b000000.b[0..1],0b00000000), 0);
+	(c,c8_out) = adder8(c7, mux8(a[7],0b0000000.b[0],0b00000000), 0);
+	c_out=c1_out+c2_out+c3_out+c4_out+c5_out+c6_out+c7_out+c8_out;
+end where
+	
+
+multiplier16 (a:8, b:8) = (c:16) where
+	(c1,garbage1) = adder16(0b00000000, mux8(a[0],b.0b00000000,0b0000000000000000), 0);
+	(c2,garbage2) = adder16(c1, mux8(a[1],0.b.0b0000000,0b0000000000000000), 0);
+	(c3,garbage3) = adder16(c2, mux8(a[2],0b00.b.0b000000,0b0000000000000000), 0);
+	(c4,garbage4) = adder16(c3, mux8(a[3],0b000.b.0b00000,0b0000000000000000), 0);
+	(c5,garbage5) = adder16(c4, mux8(a[4],0b0000.b.0b0000,0b0000000000000000), 0);
+	(c6,garbage6) = adder16(c5, mux8(a[5],0b00000.b.0b000,0b0000000000000000), 0);
+	(c7,garbage7) = adder16(c6, mux8(a[6],0b000000.b.0b00,0b0000000000000000), 0);
+	(c,garbage8) = adder16(c7, mux8(a[7],0b0000000.b.0b0,0b0000000000000000), 0);
+end where
+
+signedmultiplier (a:8,b:8) = (c:8, c_out) where
+	a1 = mux8(a[7], a, adder8((neg8 a[0..6]),0b00000000,1));
+	b1 = mux8(b[7], b, adder8((neg8 b[0..6]),0b00000000,1));
+	(c1,c1_out) = adder8(0b00000000, mux8(a1[0],b1,0b00000000), 0);
+	(c2,c2_out) = adder8(c1, mux8(a1[1],0.b1[0..6],0b00000000), 0);
+	(c3,c3_out) = adder8(c2, mux8(a1[2],0b00.b1[0..5],0b00000000), 0);
+	(c4,c4_out) = adder8(c3, mux8(a1[3],0b000.b1[0..4],0b00000000), 0);
+	(c5,c5_out) = adder8(c4, mux8(a1[4],0b0000.b1[0..3],0b00000000), 0);
+	(c6,c6_out) = adder8(c5, mux8(a1[5],0b00000.b1[0..2],0b00000000), 0);
+	(c7,c7_out) = adder8(c6, mux8(a1[6],0b000000.b1[0..1],0b00000000), 0);
+	c=(a[7]^b[7]).c7;
+	c_out=c1_out+c2_out+c3_out+c4_out+c5_out+c6_out+c7_out;
+end where
+	
+	
+	
+	
+	
+	
+
+	
+	
