@@ -12,21 +12,7 @@ isqual<n>(a:[n],b:[n]) = (c) where
 	c= not(ndiff<n>(a,b));
 end where
 
-fulladder(a,b,c) = (s, r) where
-  s = (a ^ b) ^ c;
-  r = (a & b) + ((a ^ b) & c);
-end where
 
-adder8<n>(a:[8], b:[8], c_in) = (o:[n], c_out) where
-  if n = 0 then
-    o = [];
-    c_out = c_in
-  else
-    (s_n1, c_n1) = adder8<n-1>(a, b, c_in);
-    (s_n, c_out) = fulladder(a[n-1], b[n-1], c_n1);
-    o = s_n1 . s_n
-  end if
-end where
 
 
 not8(a:[8]) = (s:[8]) where
@@ -55,33 +41,118 @@ mux8(m,a:[8],b:[8]) = (s:[8]) where
   s = mux(m,a[0],b[0]).mux(m,a[1],b[1]).mux(m,a[2],b[2]).mux(m,a[3],b[3]).mux(m,a[4],b[4]).mux(m,a[5],b[5]).mux(m,a[6],b[6]).mux(m,a[7],b[7])
 end where
 
-test(a:[8],b:[8]) = (o:[2]) where 
-(*TODO*)
-o = 0b00 ;
+mux16(m,a:[16],b:[16]) = (s:[16]) where
+  s = mux(m,a[0],b[0]).mux(m,a[1],b[1]).mux(m,a[2],b[2]).mux(m,a[3],b[3]).mux(m,a[4],b[4]).mux(m,a[5],b[5]).mux(m,a[6],b[6]).mux(m,a[7],b[7]).mux(m,a[8],b[8]).mux(m,a[9],b[9]).mux(m,a[10],b[10]).mux(m,a[11],b[11]).mux(m,a[12],b[12]).mux(m,a[13],b[13]).mux(m,a[14],b[14]).mux(m,a[15],b[15])
 end where
 
-mult(a:[8],b:[8]) = (o:[8]) where 
-(*TODO*)
-o = 0b00000000
+
+fulladder(a,b,c) = (s, r) where
+  s = (a ^ b) ^ c;
+  r = (a & b) + ((a ^ b) & c);
 end where
+
+adder8<n>(a:[8], b:[8], c_in) = (o:[n], c_out) where
+  if n = 0 then
+    o = [];
+    c_out = c_in
+  else
+    (s_n1, c_n1) = adder8<n-1>(a, b, c_in);
+    (s_n, c_out) = fulladder(a[n-1], b[n-1], c_n1);
+    o = s_n1 . s_n
+  end if
+end where
+
+adder16<n>(a:[16], b:[16], c_in) = (o:[n], c_out) where
+  if n = 0 then
+    o = [];
+    c_out = c_in
+  else
+    (s_n1, c_n1) = adder16<n-1>(a, b, c_in);
+    (s_n, c_out) = fulladder(a[n-1], b[n-1], c_n1);
+    o = s_n1 . s_n
+  end if
+end where 
+
+not8(a:[8]) = (s:[8]) where
+  s = not(a[0]).not(a[1]).not(a[2]).not(a[3]).not(a[4]).not(a[5]).not(a[6]).not(a[7])
+end where 
+
+neg8(a:[8]) = (s:[8]) where
+  (s,inutile) = adder8<8>(not8(a),0b00000000, 0b1)
+end where
+
+multiplier8 (a:[8], b:[8]) = (c:[8], c_out) where
+	(c1,c1_out) = adder8<8>(0b00000000, mux8(a[0],b,0b00000000), 0);
+	(c2,c2_out) = adder8<8>(c1, mux8(a[1],0.b[0..6],0b00000000), 0);
+	(c3,c3_out) = adder8<8>(c2, mux8(a[2],0b00.b[0..5],0b00000000), 0);
+	(c4,c4_out) = adder8<8>(c3, mux8(a[3],0b000.b[0..4],0b00000000), 0);
+	(c5,c5_out) = adder8<8>(c4, mux8(a[4],0b0000.b[0..3],0b00000000), 0);
+	(c6,c6_out) = adder8<8>(c5, mux8(a[5],0b00000.b[0..2],0b00000000), 0);
+	(c7,c7_out) = adder8<8>(c6, mux8(a[6],0b000000.b[0..1],0b00000000), 0);
+	(c,c8_out) = adder8<8>(c7, mux8(a[7],0b0000000.b[0],0b00000000), 0);
+	c_out=c1_out+c2_out+c3_out+c4_out+c5_out+c6_out+c7_out+c8_out;
+end where
+
+signed_multiplier8(a:[8],b:[8]) = (c:[8],c_out) where 
+	(*a corriger dans brouillon Kolia*)
+	c = 0b00000000 ;
+	c_out = 0b0
+end where
+	
+
+multiplier16 (a:[8], b:[8]) = (c:[16]) where
+	(c1,garbage1) = adder16<16>(0b0000000000000000, mux16(a[0],b.0b00000000,0b0000000000000000), 0);
+	(c2,garbage2) = adder16<16>(c1, mux16(a[1],0.b.0b0000000,0b0000000000000000), 0);
+	(c3,garbage3) = adder16<16>(c2, mux16(a[2],0b00.b.0b000000,0b0000000000000000), 0);
+	(c4,garbage4) = adder16<16>(c3, mux16(a[3],0b000.b.0b00000,0b0000000000000000), 0);
+	(c5,garbage5) = adder16<16>(c4, mux16(a[4],0b0000.b.0b0000,0b0000000000000000), 0);
+	(c6,garbage6) = adder16<16>(c5, mux16(a[5],0b00000.b.0b000,0b0000000000000000), 0);
+	(c7,garbage7) = adder16<16>(c6, mux16(a[6],0b000000.b.0b00,0b0000000000000000), 0);
+	(c,garbage8) = adder16<16>(c7, mux16(a[7],0b0000000.b.0b0,0b0000000000000000), 0);
+end where
+	
+shiftr8 (a:[8], b:[8]) = (c:[8]) where
+	d= mux8 (b[2], 0b0000.a[0..3],a); 
+	e= mux8 (b[1], 0b00 . d[0..5], d); 
+	f= mux8 (b[0], 0b0 . e[0..6], e); 
+	c= mux8 (b[3]+b[4]+b[5]+b[6]+b[7], 0b00000000, f) ; 
+end where
+
+shiftl8 (a:[8], b:[8]) = (c:[8]) where
+	d= mux8 (b[2], a[4..7].0b0000,a); 
+	e= mux8 (b[1], d[2..7].0b00  , d); 
+	f= mux8 (b[0], e[1..7].0b0, e); 
+	c= mux8 (b[3]+b[4]+b[5]+b[6]+b[7], 0b00000000, f) ; 
+end where
+		 
+
+sla8  (a:[8], b:[8]) = (c:[8]) where
+	d= mux8 (b[2],  a[4..7].a[7].a[7].a[7].a[7],a); 
+	e= mux8 (b[1], d[2..7].a[7] .a[7], d); 
+	f= mux8 (b[0], e[1..7].a[7], e); 
+	c= mux8 (b[3]+b[4]+b[5]+b[6]+b[7], a[7].a[7].a[7].a[7].a[7].a[7].a[7].a[7], f) ; 
+end where
+	
 
 alu(a:[8],b:[8],config:[8]) = (s:[8]) where 
+  zero8 = 0b00000000 ;
   na = not8(a);
   nb = not8(b);
   entree_adder1 = a ; 
   entree_adder2 = mux8(config[7],nb,b) ;
   (sortie_adder,inutile) = adder8<8>(entree_adder1,entree_adder2,config[7]) ;
-  sortie_mult = mult(a,b) ;
-  
+  (sortie_mult,ovf_mult) = multiplier8(a,b) ;
+  (sortir_mults,ovf_mults) = multiplier8s(a,b) ; 
 
-  sortie_arith = mux8(config[2],sortie_mult,sortie_adder) ;
+
+  sortie_arith = multi_mux<8,2>(config[2..3],sortie_adder . sortie_mult . sortie_mults . zero8) ;
   sortie_and = and8(a,b) ; 
-
   sortie_or = or8(a,b) ;
   sortie_xor = xor8(a,b) ;
-  sortie_nand = nand8(a,b) ;
-  zero8 = 0b00000000 ;
-  allsorties = sortie_and . sortie_or . sortie_xor . zero8 . na . zero8 . zero8 . zero8 ;
+  sortie_shl = shiftl8(a,b) ;
+  sortie_shr = shiftr8(a,b) ;
+  sortie_sla = sla8(a,b) ;
+  allsorties = sortie_and . sortie_or . sortie_xor . na . sortie_shl . sortie_shr . sortie_sla . zero8 ;
   sortie_logique = multi_mux<8,3>(config[2..4],allsorties) ;
   
   s = multi_mux<8,1>(config[1],sortie_arith . sortie_logique) ;

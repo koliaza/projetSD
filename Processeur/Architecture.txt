@@ -31,16 +31,16 @@ BX : 001(_)
 RA : 111(_)
 
 
-*les nombres indiqués sont les 8 bits de config de l'alu*
+
 ------ Liste de l'ensemble des instructions
 
-ADD reg1,reg2 00000000
+ADD reg1,reg2 
   Addition non signée reg1 <- reg1 + reg2
   
 ADDS reg1,reg2
   Addition signée reg1 <- reg1 + reg2
   
-AND reg1,reg2 01000000
+AND reg1,reg2 
   ET logique reg1 <- reg1 & reg2
 
 DIV reg1,reg2
@@ -93,10 +93,10 @@ MULS reg1,reg2
 NOT reg1
   opération non bit à bit: reg1 <- non reg1
   
-OR reg1,reg2 01100000
+OR reg1,reg2 
   OU logique reg1 <- reg1 or reg2
    
-SUB reg,reg 00000001
+SUB reg,reg 
   soustraction non signée reg1 <- reg1 - reg2
 
 SUBS reg,reg
@@ -120,21 +120,21 @@ TEST reg1,reg2
   FLAGS.(1) est assigné à 1 si reg1 >= reg2, 0 sinon
 
 
-
+*les nombres indiqués sont les 8 bits de config de l'alu*
 ------ Instructions par type
 
 ARITHMETIQUE 8 opérations
 
-ADD reg1,reg2
+ADD reg1,reg2 10000000
   Addition non signée reg1 <- reg1 + reg2
   
-ADDS reg1,reg2
+ADDS reg1,reg2 10000000 (*addition signée et non signée identique d'un point de vue circuit logique*)
   Addition signée reg1 <- reg1 + reg2
   
-MUL reg1,reg2
+MUL reg1,reg2 10100000
   Multiplication non signée: reg1 <- reg1 * reg2
   
-MULS reg1,reg2
+MULS reg1,reg2 10010000
   Multiplication signée: reg1 <- reg1 * reg2
 
 DIV reg1,reg2
@@ -145,31 +145,34 @@ DIVS reg1,reg2
   Division signée: reg1 <- reg1 / reg2
   Si reg2 = 0 alors renvoie 11111111
 
-SUB reg,reg
+SUB reg,reg 
   soustraction non signée reg1 <- reg1 - reg2
 
-SUBS reg,reg
+SUBS reg,reg 10000001
   soustraction signée reg1 <- reg1 - reg2
 
 LOGIQUE 6 opérations
 
-AND reg1,reg2
+AND reg1,reg2 11000000
   ET logique reg1 <- reg1 & reg2
 
-NOT reg1
+NOT reg1 11110000
   opération non bit à bit: reg1 <- non reg1
   
-OR reg1,reg2
+OR reg1,reg2 11100000
   OU logique reg1 <- reg1 or reg2
    
-SHL reg1,reg2
+SHL reg1,reg2 11001000
   décale reg1 de reg2 bits vers la gauche et le met dans reg1
   
-SHR reg1,reg2
+SHR reg1,reg2 11101000
   décale reg1 de reg2 bits vers la droite
 
-SLA reg1, reg2
+SLA reg1, reg2 11011000
   décale reg1 de reg2 bits vers la gauche en ajoutant des bits égaux au bit de signe
+
+XOR reg1,reg2 11010000
+  XOR logique reg1 <- re1 xor reg2
 
 BRANCHEMENTS 8 opérations
   
