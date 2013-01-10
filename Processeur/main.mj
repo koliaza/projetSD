@@ -17,7 +17,7 @@ is_memoire = instruction[1]
 sortie_bloc_registre = bloc_registre(need_write_arg1,mux4(is_jal,0b1111 , mux4(is_li,0b0000,argument_4bit_1)),argument_4bit_2,res_a_ecrire_eventuellement)
 reg1 = sortie_bloc_registre[0..7]
 reg2 = sortie_bloc_registre[8..15]
-res_alu = alu(reg1,reg2,instruction[1..7])
+res_alu = alu(reg1,reg2,instruction[0..7])
 
 
 (* rq: vrai si is_memoire = 0 *)
