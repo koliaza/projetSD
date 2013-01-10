@@ -54,7 +54,7 @@ will_jump = not(is_arith) and not(is_memoire) and mux(is_jal or is_jmp, 1, mux (
 pc_plus_1 = adder8<8>(pc,0b00000000,1)
 
 
-res_a_ecrire_eventuellement = mux8(is_jal_real,pc_plus_1,mux8(is_li or is_lw, res_intermediaire_load, res_alu) )
+res_a_ecrire_eventuellement = mux8(is_jal_real,pc_plus_1,mux8(is_li_real or is_lw_real, res_intermediaire_load, res_alu) )
 need_write_arg1 = is_arith or is_li_real or is_lw_real or is_jal_real
 
 
