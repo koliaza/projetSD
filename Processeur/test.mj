@@ -1,9 +1,94 @@
+mux8(m,a:[8],b:[8]) = (s:[8]) where
+  s = mux(m,a[0],b[0]).mux(m,a[1],b[1]).mux(m,a[2],b[2]).mux(m,a[3],b[3]).mux(m,a[4],b[4]).mux(m,a[5],b[5]).mux(m,a[6],b[6]).mux(m,a[7],b[7])
+end where
+
+mux16(m,a:[16],b:[16]) = (s:[16]) where
+  s = mux(m,a[0],b[0]).mux(m,a[1],b[1]).mux(m,a[2],b[2]).mux(m,a[3],b[3]).mux(m,a[4],b[4]).mux(m,a[5],b[5]).mux(m,a[6],b[6]).mux(m,a[7],b[7]).mux(m,a[8],b[8]).mux(m,a[9],b[9]).mux(m,a[10],b[10]).mux(m,a[11],b[11]).mux(m,a[12],b[12]).mux(m,a[13],b[13]).mux(m,a[14],b[14]).mux(m,a[15],b[15])
+end where
+
+
+fulladder(a,b,c) = (s, r) where
+  s = (a ^ b) ^ c;
+  r = (a & b) + ((a ^ b) & c);
+end where
+
+adder8<n>(a:[8], b:[8], c_in) = (o:[n], c_out) where
+  if n = 0 then
+    o = [];
+    c_out = c_in
+  else
+    (s_n1, c_n1) = adder8<n-1>(a, b, c_in);
+    (s_n, c_out) = fulladder(a[n-1], b[n-1], c_n1);
+    o = s_n1 . s_n
+  end if
+end where
+
+adder16<n>(a:[16], b:[16], c_in) = (o:[n], c_out) where
+  if n = 0 then
+    o = [];
+    c_out = c_in
+  else
+    (s_n1, c_n1) = adder16<n-1>(a, b, c_in);
+    (s_n, c_out) = fulladder(a[n-1], b[n-1], c_n1);
+    o = s_n1 . s_n
+  end if
+end where 
 
 not8(a:[8]) = (s:[8]) where
   s = not(a[0]).not(a[1]).not(a[2]).not(a[3]).not(a[4]).not(a[5]).not(a[6]).not(a[7])
 end where 
 
-main (a:[8]) = (s:[8]) where
-s = not8(a)
+neg8(a:[8]) = (s:[8]) where
+  (s,inutile) = adder8<8>(not8(a),0b00000000, 0b1)
+end where
+
+multiplier8 (a:[8], b:[8]) = (c:[8], c_out) where
+	(c1,c1_out) = adder8<8>(0b00000000, mux8(a[0],b,0b00000000), 0);
+	(c2,c2_out) = adder8<8>(c1, mux8(a[1],0.b[0..6],0b00000000), 0);
+	(c3,c3_out) = adder8<8>(c2, mux8(a[2],0b00.b[0..5],0b00000000), 0);
+	(c4,c4_out) = adder8<8>(c3, mux8(a[3],0b000.b[0..4],0b00000000), 0);
+	(c5,c5_out) = adder8<8>(c4, mux8(a[4],0b0000.b[0..3],0b00000000), 0);
+	(c6,c6_out) = adder8<8>(c5, mux8(a[5],0b00000.b[0..2],0b00000000), 0);
+	(c7,c7_out) = adder8<8>(c6, mux8(a[6],0b000000.b[0..1],0b00000000), 0);
+	(c,c8_out) = adder8<8>(c7, mux8(a[7],0b0000000.b[0],0b00000000), 0);
+	c_out=c1_out+c2_out+c3_out+c4_out+c5_out+c6_out+c7_out+c8_out;
+end where
+	
+
+multiplier16 (a:[8], b:[8]) = (c:[16]) where
+	(c1,garbage1) = adder16<16>(0b0000000000000000, mux16(a[0],b.0b00000000,0b0000000000000000), 0);
+	(c2,garbage2) = adder16<16>(c1, mux16(a[1],0.b.0b0000000,0b0000000000000000), 0);
+	(c3,garbage3) = adder16<16>(c2, mux16(a[2],0b00.b.0b000000,0b0000000000000000), 0);
+	(c4,garbage4) = adder16<16>(c3, mux16(a[3],0b000.b.0b00000,0b0000000000000000), 0);
+	(c5,garbage5) = adder16<16>(c4, mux16(a[4],0b0000.b.0b0000,0b0000000000000000), 0);
+	(c6,garbage6) = adder16<16>(c5, mux16(a[5],0b00000.b.0b000,0b0000000000000000), 0);
+	(c7,garbage7) = adder16<16>(c6, mux16(a[6],0b000000.b.0b00,0b0000000000000000), 0);
+	(c,garbage8) = adder16<16>(c7, mux16(a[7],0b0000000.b.0b0,0b0000000000000000), 0);
+end where
+
+
+adder_8 (a:[8],b:[8],c) = (s:[8]) where
+(s,inutile) = adder8<8> (a,b,c)
+end where
+
+
+signedmultiplier (a:[8],b:[8]) = (c:[8], c_out) where
+	a1 = mux8(a[7], a, adder_8(neg8 (a[0..7]),0b00000000,1)); (* t'avais mis 0..6, mais mis 0..7*)
+	b1 = mux8(b[7], b, adder_8(neg8 (b[0..7]),0b00000000,1));
+	(c1,c1_out) = adder8<8>(0b00000000, mux8(a1[0],b1,0b00000000), 0);
+	(c2,c2_out) = adder8<8>(c1, mux8(a1[1],0.b1[0..6],0b00000000), 0);
+	(c3,c3_out) = adder8<8>(c2, mux8(a1[2],0b00.b1[0..5],0b00000000), 0);
+	(c4,c4_out) = adder8<8>(c3, mux8(a1[3],0b000.b1[0..4],0b00000000), 0);
+	(c5,c5_out) = adder8<8>(c4, mux8(a1[4],0b0000.b1[0..3],0b00000000), 0);
+	(c6,c6_out) = adder8<8>(c5, mux8(a1[5],0b00000.b1[0..2],0b00000000), 0);
+	(c7,c7_out) = adder8<8>(c6, mux8(a1[6],0b000000.b1[0..1],0b00000000), 0);
+	c=c7[0..6].(a[7]^b[7]); (* je suppose que c'est [0..6] *)
+	c_out=c1_out+c2_out+c3_out+c4_out+c5_out+c6_out+c7_out;
+end where
+	
+	
+
+main (a:[8],b:[8]) = (s:[8]) where
+(s,inutile) = signedmultiplier(a,b)
 
 end where
