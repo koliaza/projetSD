@@ -31,16 +31,16 @@ BX : 001(_)
 RA : 111(_)
 
 
-
+*les nombres indiqués sont les 8 bits de config de l'alu*
 ------ Liste de l'ensemble des instructions
 
-ADD reg1,reg2
+ADD reg1,reg2 00000000
   Addition non signée reg1 <- reg1 + reg2
   
 ADDS reg1,reg2
   Addition signée reg1 <- reg1 + reg2
   
-AND reg1,reg2
+AND reg1,reg2 01000000
   ET logique reg1 <- reg1 & reg2
 
 DIV reg1,reg2
@@ -93,10 +93,10 @@ MULS reg1,reg2
 NOT reg1
   opération non bit à bit: reg1 <- non reg1
   
-OR reg1,reg2
+OR reg1,reg2 01100000
   OU logique reg1 <- reg1 or reg2
    
-SUB reg,reg
+SUB reg,reg 00000001
   soustraction non signée reg1 <- reg1 - reg2
 
 SUBS reg,reg

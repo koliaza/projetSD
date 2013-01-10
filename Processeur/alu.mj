@@ -3,13 +3,13 @@ ndiff<n>(a:[n],b:[n]) = (c) where
 	if n = 0 
 	then c = 0 ;
 	else
-		c = (a[0]^b[0]) + ndiff<n-1>(a[1..],b[1..]) ;
+		c = (a[0]^b[0]) or ndiff<n-1>(a[1..],b[1..]) ;
 	end if
 end where
 
 
 isqual<n>(a:[n],b:[n]) = (c) where
-	c= not(ndiff(a,b));
+	c= not(ndiff<n>(a,b));
 end where
 
 fulladder(a,b,c) = (s, r) where
@@ -17,21 +17,39 @@ fulladder(a,b,c) = (s, r) where
   r = (a & b) + ((a ^ b) & c);
 end where
 
-adder<n>(a:[n], b:[n], c_in) = (o:[n], c_out) where
+adder8<n>(a:[8], b:[8], c_in) = (o:[n], c_out) where
   if n = 0 then
     o = [];
-    c_out = 0
+    c_out = c_in
   else
-    (s_n1, c_n1) = adder<n-1>(a[1..], b[1..], c_in);
-    (s_n, c_out) = fulladder(a[0], b[0], c_n1);
-    o = s_n . s_n1
+    (s_n1, c_n1) = adder8<n-1>(a, b, c_in);
+    (s_n, c_out) = fulladder(a[n-1], b[n-1], c_n1);
+    o = s_n1 . s_n
   end if
 end where
 
 
-not8(a:[8]) = (s:[8]) where 
-  s =not(a[0]).not(a[1]).not(a[2]).not(a[3]).not(a[4]).not(a[5]).not(a[6]).not(a[7])
-end where
+not8(a:[8]) = (s:[8]) where
+  s = not(a[0]).not(a[1]).not(a[2]).not(a[3]).not(a[4]).not(a[5]).not(a[6]).not(a[7])
+end where 
+
+
+and8(a:[8],b:[8]) = (s:[8]) where
+s = (a[0] and b[0]).(a[1] and b[1]).(a[2] and b[2]).(a[3] and b[3]).(a[4] and b[4]).(a[5] and b[5]).(a[6] and b[6]).(a[7] and b[7])
+end where 
+
+or8(a:[8],b:[8]) = (s:[8]) where
+s = (a[0] or b[0]).(a[1] or b[1]).(a[2] or b[2]).(a[3] or b[3]).(a[4] or b[4]).(a[5] or b[5]).(a[6] or b[6]).(a[7] or b[7])
+end where 
+
+xor8(a:[8],b:[8]) = (s:[8]) where
+s = (a[0] xor b[0]).(a[1] xor b[1]).(a[2] xor b[2]).(a[3] xor b[3]).(a[4] xor b[4]).(a[5] xor b[5]).(a[6] xor b[6]).(a[7] xor b[7])
+end where 
+
+nand8(a:[8],b:[8]) = (s:[8]) where
+s = not8(and8(a,b)) 
+end where 
+
 
 mux8(m,a:[8],b:[8]) = (s:[8]) where
   s = mux(m,a[0],b[0]).mux(m,a[1],b[1]).mux(m,a[2],b[2]).mux(m,a[3],b[3]).mux(m,a[4],b[4]).mux(m,a[5],b[5]).mux(m,a[6],b[6]).mux(m,a[7],b[7])
@@ -42,32 +60,35 @@ test(a:[8],b:[8]) = (o:[2]) where
 o = 0b00 ;
 end where
 
-alu(a:[8],b:[8],config) = (s:[8]) where 
+mult(a:[8],b:[8]) = (o:[8]) where 
+(*TODO*)
+o = 0b00000000
+end where
+
+alu(a:[8],b:[8],config:[8]) = (s:[8]) where 
   na = not8(a);
   nb = not8(b);
   entree_adder1 = a ; 
-  entree_adder2 = mux8(config[0],nb,b) ;
-  (sortie_adder,inutile) = adder<8>(entree_adder1,entree_adder1,config[0]) ;
+  entree_adder2 = mux8(config[7],nb,b) ;
+  (sortie_adder,inutile) = adder8<8>(entree_adder1,entree_adder2,config[7]) ;
   sortie_mult = mult(a,b) ;
   
-  sortie_arith = mux(cconfig_bit,sortie_adder,sortie_mult) ;
-  sortie_and = and8(a,b) ;
+
+  sortie_arith = mux8(config[2],sortie_mult,sortie_adder) ;
+  sortie_and = and8(a,b) ; 
+
   sortie_or = or8(a,b) ;
   sortie_xor = xor8(a,b) ;
   sortie_nand = nand8(a,b) ;
   zero8 = 0b00000000 ;
-  sortie_logique = multi_mux<8,3>(3_bit_config,sortie_and . sortie_or . sortie_xor . sortie_nand . na . zero8 . zero8 . zero8 ) ;
+  allsorties = sortie_and . sortie_or . sortie_xor . zero8 . na . zero8 . zero8 . zero8 ;
+  sortie_logique = multi_mux<8,3>(config[2..4],allsorties) ;
   
-  sortie_test = test(a,b) . 0b000000 ;
-  
-  sortie = multi_mux<8,2>(2_bit_config,sortie_arith . sortie_logique . sortie_test . zero8) ;
-
+  s = multi_mux<8,1>(config[1],sortie_arith . sortie_logique) ;
 
 end where
 
-main(a:[8],b:[8],c) = (s:[8]) where 
-	s = alu(a,b,c) ;
+main(a:[8],b:[8],c:[8]) = (s:[8]) where 
+	s = alu(a,b,c)
 
 end where
-
-
