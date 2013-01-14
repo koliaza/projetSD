@@ -8,7 +8,7 @@ end where
 adder8<n>(a:[8], b:[8], c_in) = (o:[n], c_out) where
   if n = 0 then
     o = [];
-    c_out = 0
+    c_out = c_in
   else
     (s_n1, c_n1) = adder8<n-1>(a, b, c_in);
     (s_n, c_out) = fulladder(a[n-1], b[n-1], c_n1);
@@ -19,7 +19,7 @@ end where
 adder16<n>(a:[16], b:[16], c_in) = (o:[n], c_out) where
   if n = 0 then
     o = [];
-    c_out = 0
+    c_out = c_in
   else
     (s_n1, c_n1) = adder16<n-1>(a, b, c_in);
     (s_n, c_out) = fulladder(a[n-1], b[n-1], c_n1);

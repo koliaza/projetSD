@@ -20,14 +20,17 @@ les arguments peuvent être de la forme :
 
 ------ Registres
 
-AX et BX sont des registres 8 bits qui permettent toutes les opérations. AX sera particulièrement utilisé pour charger des entiers de la mémoire ou de constantes.
+AX, BX, CX, DX et EX sont des registres 8 bits qui permettent toutes les opérations. AX sera particulièrement utilisé pour charger des entiers de la mémoire ou de constantes.
 PC est un registre 8 bits qui pointe l'instruction à exécuter au prochain tour
 RA est un registre 8 bits utilisé par jump and link (jal)
-SP et FP servent à gérer la pile (registres 8 bits)
+SP sert à gérer la pile (registres 8 bits)
 FLAGS est un registre de quelques bits qui servira en interne à la gestion des sauts.
-PP : registre cible par défaut des différentes portes. 
 AX : 000(_)
 BX : 001(_)
+CX : 010(_)
+DX : 011(_)
+EX : 100(_)
+SP : 101(_)
 RA : 111(_)
 
 
@@ -83,6 +86,9 @@ LI int8
 
 LW reg1,reg2
   Charge un entier 8 bits contenu dans la RAM à l'adresse reg2 dans reg1.
+
+MOVE reg1,reg2
+  reg1 <- reg2
   
 MUL reg1,reg2
   Multiplication non signée: reg1 <- reg1 * reg2
@@ -130,20 +136,15 @@ ADD reg1,reg2 10000000
   
 ADDS reg1,reg2 10000000 (*addition signée et non signée identique d'un point de vue circuit logique*)
   Addition signée reg1 <- reg1 + reg2
+
+MOVE reg1,reg2
+  reg1 <- reg2
   
 MUL reg1,reg2 10100000
   Multiplication non signée: reg1 <- reg1 * reg2
   
 MULS reg1,reg2 10010000
   Multiplication signée: reg1 <- reg1 * reg2
-
-DIV reg1,reg2
-  Division non signée: reg1 <- reg1 / reg2
-  Si reg2 = 0 alors renvoie 11111111
-  
-DIVS reg1,reg2
-  Division signée: reg1 <- reg1 / reg2
-  Si reg2 = 0 alors renvoie 11111111
 
 SUB reg,reg 
   soustraction non signée reg1 <- reg1 - reg2
@@ -176,52 +177,49 @@ XOR reg1,reg2 11010000
 
 BRANCHEMENTS 8 opérations
   
-JAL addr8 
+JAL addr8  00011100
   saut à addr8 et sauvegarde de PC dans RA
   
-JE addr8 (equal)
+JE addr8 (equal) 00011000
   Saut à addr8 si FLAG.(0) est à 1, passe à la suite sinon.
   
-JL addr8 (less)
+JL addr8 (less)  00010100
   Saut à addr8 si FLAG.(1) est à 0, passe à la suite sinon.
   
-JLE addr8 (less or equal)
+JLE addr8 (less or equal)   00010000
   Saut à addr8 si FLAG.(0) est à 1 ou FLAG.(1) est à 0, passe à la suite sinon.
   
-JM addr8 (more)
+JM addr8 (more)   00001100
   Saut à addr8 si FLAG.(1) est à 1 et FLAG.(0) à 0, passe à la suite sinon.
   
-JME addr8 (more or equal)
+JME addr8 (more or equal) 00001000
   Saut à addr8 si FLAG.(1) est à 1, passe à la suite sinon.
   
-JMP addr8
+JMP addr8 00000100
   Saut à addr8
 
-JNE addr8 (not equal)
+JNE addr8 (not equal) 00000000
   Saut à addr8 si FLAG.(0) est à 0, passe à la suite sinon.
      
-TEST reg1,reg2
+TEST reg1,reg2 00100000
   Fait un comparaison de reg1 et de reg2: (non signée)
   FLAGS.(0) est assigné à 1 s'il y a égalité, 0 sinon.
   FLAGS.(1) est assigné à 1 si reg1 >= reg2, 0 sinon
 
-TESTS reg1,reg2
+TESTS reg1,reg2 00100100
   Fait un comparaison de reg1 et de reg2: (signée)
   FLAGS.(0) est assigné à 1 s'il y a égalité, 0 sinon.
   FLAGS.(1) est assigné à 1 si reg1 >= reg2, 0 sinon
 
 INTERFACE MEMOIRE 4 opérations
 
-LI int8
+LI int8 01110000
   Charge un entier 8 bits dans le registre AX
 
-LW reg1,reg2
+LW reg1,reg2 01100000
   Charge un entier 8 bits contenu dans la RAM à l'adresse reg2 dans reg1.
-  
-(LA constante8)
-   Sert à charger l'adresse d'une constante dans AX. Surcouche assembleur: fera en fait appel à LI.
 
-SW reg1,reg2
+SW reg1,reg2 01010000
 Ecrit le contenu de reg2 à l'adresse reg1 de la RAM
 (ordre inversé par l'assembleur SW reg2,reg1)
 
@@ -230,11 +228,6 @@ Ecrit le contenu de reg2 à l'adresse reg1 de la RAM
 
 
 Implémentation :
-Décomposer une instruction 8 bits en 2 bits de catégorie, 1 bit de Signé/non et 5 bits d'instruction.
-Par ex : 00 = Logique, et And = 000001, d'où 00000001 = AND.
-01 = ARITH et ADD = 00001, d'où ADD = 01 0 00001 et ADDS = 01 1 00001
-
-
 1er bit : arith ou non
 2e bit : logique | memoire
 3e bit : signee | 
