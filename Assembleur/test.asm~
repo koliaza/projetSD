@@ -1,4 +1,0 @@
-	li 0
-	xor $sp,$sp
-	or $sp,$ax
-
