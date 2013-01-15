@@ -1,3 +1,82 @@
+(*bloc pour la gestion des registres.*)
+
+(*mux et démux, utiles éventuellements pour d'autres choses aussi*)
+
+nmux<n>(c,a:[n],b:[n]) = (o:[n]) where
+	if n = 0 
+	then o = [] ;
+	else
+		o = mux(c,a[0],b[0]) . nmux<n-1>(c,a[1..],b[1..]) ;
+	end if
+end where
+
+mux8 (c,a:[8],b:[8]) = (o:[8]) where 
+	o = nmux<8>(c,a,b)
+end where
+	
+	
+demux<n>(adress:[n],input) = (o:[2^n]) where
+	if n = 0 
+	then
+		o = input ;
+	else 
+		i2 = input & adress[n-1] ;
+		i1 = input & (not (adress[n-1])) ;
+		o = demux<n-1>(adress[..n-2],i1) . demux<n-1>(adress[..n-2],i2) ;
+	end if 
+end where
+
+multi_mux<m,n>(adress:[n],input:[m*2^n]) = (o:[m]) where
+	if n = 0 
+	then 
+		o = input ;
+	else 
+		i2 = multi_mux<m,n-1>(adress[..n-2],input[..(m*(2^(n-1)))-1]) ;
+		i1 = multi_mux<m,n-1>(adress[..n-2],input[m*2^(n-1)..]) ;
+		o = nmux<m>(adress[n-1],i1,i2) ;
+	end if
+end where
+	
+(*registres*)	
+mem_reg(write_enable,in) = o where 
+	input = mux(write_enable,in,o) ;
+	o = reg(input) ;
+end where
+	
+reg2(write_enable,in:[2]) = (out:[2]) where
+	out = mem_reg(write_enable,in[0]).mem_reg(write_enable,in[1]) ;
+end where
+
+reg8(write_enable,in:[8]) = (out:[8]) where 
+	out = mem_reg(write_enable,in[0]).mem_reg(write_enable,in[1]).mem_reg(write_enable,in[2]).mem_reg(write_enable,in[3]).
+		mem_reg(write_enable,in[4]).mem_reg(write_enable,in[5]).mem_reg(write_enable,in[6]).mem_reg(write_enable,in[7]) ;
+end where
+
+
+bloc_registre(write_enable,adr_1:[4],adr_2:[4],in:[8]) = (out:[16]) where 
+(*remarque : on a deux registres en sortie pour les opérations, donc out sur 16 bits*)
+adress_1 = adr_1[0..2] ;
+adress_2 = adr_2[0..2] ;
+w_e = demux<3>(adress_1,write_enable) ;
+reg_0 = reg8(w_e[0],in) ; 
+reg_1 = reg8(w_e[1],in) ; 
+reg_2 = reg8(w_e[2],in) ; 
+reg_3 = reg8(w_e[3],in) ; 
+reg_4 = reg8(w_e[4],in) ; 
+reg_5 = reg8(w_e[5],in) ; 
+reg_6 = reg8(w_e[6],in) ; 
+reg_7 = reg8(w_e[7],in) ; 
+all_reg = reg_0 . reg_1 . reg_2 . reg_3 . reg_4 . reg_5 . reg_6 . reg_7   ;
+out = multi_mux<8,3>(adress_1,all_reg) . multi_mux<8,3>(adress_2,all_reg)
+end where
+
+
+
+
+
+
+
+
 
 ndiff<n>(a:[n],b:[n]) = (c) where
 	if n = 0 
@@ -171,3 +250,123 @@ main(a:[8],b:[8],c:[8]) = (s:[8]) where
 	s = alu(a,b,c)
 
 end where
+
+
+
+
+
+
+
+
+
+
+
+
+ndiff<n>(a:[n],b:[n]) = (c) where
+	if n = 0 
+	then c = 0 ;
+	else
+		c = (a[0]^b[0]) or ndiff<n-1>(a[1..],b[1..]) ;
+	end if
+end where
+
+
+isqual<n>(a:[n],b:[n]) = (c) where
+	c= not(ndiff<n>(a,b));
+end where
+
+isequal4(a:[4],b:[4]) = (c) where
+	c = isqual<4>(a,b);
+end where
+
+isequal2(a:[2],b:[2]) = (c) where
+	c = isqual<2>(a,b);
+end where
+
+compare<n> (a:[n], b:[n]) = (o:[2]) where (* non signé*)
+	if n=0 then 
+	o = 0b11;
+	else 
+		o1=compare<n-1>(a[0..n-2],b[0..n-2]);
+		o =mux((a[n-1]^b[n-1]),0,o1[0]) . mux((a[n-1]^b[n-1]),a[n-1],o1[1]);
+
+	end if
+end where
+
+comparesigned <n> (a:[n], b:[n]) = (o:[2]) where 
+		o1 = compare<n-1>(a[0..n-2],b[0..n-2]);
+		o =mux((a[n-1]^b[n-1]),0,o1[0]) . mux((a[n-1]^b[n-1]),b[n-1],o1[1]);
+	
+end where
+
+
+main() = () where 
+
+instr = rom<8,16>(pc) ;
+instruction = instr[0..7] ; 
+argument_8bit = instr[8..15] ;
+argument_4bit_1 = argument_8bit[0..3] ;
+argument_4bit_2 = argument_8bit[4..7] ;
+is_arith = instruction[0] ;
+is_memoire = instruction[1] ;
+bit_2 = instruction [2..3] ;
+bit_4 = instruction [2..5] ;
+
+
+sortie_bloc_registre = bloc_registre(need_write_arg1,mux4(is_jal_real,0b1111 , mux4(is_li,0b0000,argument_4bit_1)),argument_4bit_2,res_a_ecrire_eventuellement) ;
+reg1 = sortie_bloc_registre[0..7] ;
+reg2 = sortie_bloc_registre[8..15] ;
+res_alu = alu(reg1,reg2,instruction[0..7]) ;
+
+
+(* rq: vrai si is_memoire = 0 *)
+is_jal = isequal4(bit_4,0b0111)  ;
+is_je =  isequal4(bit_4,0b0110) ;
+is_jl =  isequal4(bit_4,0b0101) ;
+is_jle = isequal4(bit_4,0b0100) ;
+is_jm = isequal4(bit_4,0b0011) ;
+is_jme = isequal4(bit_4,0b0010) ;
+is_jmp = isequal4(bit_4,0b0001) ;
+is_jne = isequal4(bit_4,0b0000) ;
+
+
+
+
+(* rq: vrai si is_memoire = 1 *)
+is_li = isequal2(bit_2,0b11) ;
+is_lw = isequal2(bit_2,0b10) ;
+is_sw = isequal2(bit_2,0b01) ;
+
+is_jal_real = is_jal and (not(is_arith or is_memoire)) ;
+is_li_real = is_li and ((not (is_arith)) and is_memoire  ) ;
+is_lw_real = is_lw and ((not (is_arith)) and is_memoire  ) ;
+is_test = isequal4(bit_4,0b1000) and (not(is_arith or is_memoire)) ;
+is_tests = isequal4(bit_4,0b1001) and (not(is_arith or is_memoire)) ;
+
+res_intermediaire_load = mux8(is_li,argument_8bit,(*ram<8,8>(reg2,0,0,0) *) temp (*c'est pas ca ?*) ) ;
+temp = ram<8,8>(reg1,is_sw,reg1,reg2) ;
+
+
+flags  = reg2 (is_test, mux2(is_tests, comparesigned<8>(reg1,reg2), compare<8> (reg1,reg2) )) ;
+(*addr_jump = argument_8bit*) 
+will_jump = not(is_arith) and not(is_memoire) and mux(is_jal or is_jmp, 1, mux (is_je and (*à vérifier*) flags[0], 1, mux ( is_jl, not(flags[1]), mux( is_jle, flags[0] or (not flags[1]), mux (is_jm, flags[1] and (not(flags[0])), mux (is_jme, flags[1], mux(is_jne, not(flags[0]), 0)      )      )        )      )   ) )   ;
+
+(pc_plus_1,inutile) = adder8<8>(pc,0b00000000,1) ;
+
+
+res_a_ecrire_eventuellement = mux8(is_jal_real,pc_plus_1,mux8(is_li_real or is_lw_real, res_intermediaire_load, res_alu)) ;
+need_write_arg1 = is_arith or is_li_real or is_lw_real or is_jal_real ;
+
+
+
+pc = reg8(1,mux8(will_jump,argument_8bit,pc_plus_1) ) ;
+
+
+end where
+
+
+
+
+
+
+
