@@ -91,7 +91,7 @@ let apply_eq p eq =
 		| MNand(k,k') ->  tabvar.(fst eq) <- vnand (tabvar.(k),tabvar.(k'))	
 		| MXor(k,k') ->  tabvar.(fst eq) <- vxor (tabvar.(k),tabvar.(k'))
 		| MEmux(k,k1,k2) ->  tabvar.(fst eq) <- vmux (tabvar.(k),tabvar.(k1),tabvar.(k2))
-		| MErom(_,_,k) -> tabvar.(fst eq) <- p.mp_tabrom.(adr_to_int tabvar.(k))
+		| MErom(_,_,k) -> tabvar.(fst eq) <- p.mp_tabrom.(adr_to_int tabvar.(k)) 
 		| MEram(_,_,k,_,_,_) ->tabvar.(fst eq) <- p.mp_tabram.(adr_to_int tabvar.(k)) 
 		| MEslice(s1,s2,k) ->  tabvar.(fst eq) <- slice s1 s2 tabvar.(k)
 		| MEselect(n,k) -> tabvar.(fst eq) <- extraction_VBit n (tabvar.(k)) 		

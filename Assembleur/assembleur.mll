@@ -4,6 +4,8 @@ non implémentés : subs, mults, jr*)
 
 exception Assembleur_error of string 
 
+let nombre_lignes = ref 0 
+
 let key_words = Hashtbl.create 17 
 
 let lkw = [
@@ -59,7 +61,7 @@ let labels = Hashtbl.create 17
 let int_to_string i = 
 	let s = String.create 8 in 
 	for j = 0 to 7 do 
-	  s.[j] <- if (i/(1 lsl i)) mod 2 = 0 then '0' else '1' ;
+	  s.[j] <- if (i/(1 lsl j)) mod 2 = 0 then '0' else '1' ;
 	done ;
 	s
 }
@@ -80,21 +82,21 @@ rule get_lab i = parse
  | [^'\n']* '\n' {get_lab (i+1) lexbuf}
 
 and assembleur fft = parse 
- | sep* (key_w as op) sep+ '$' (ident as reg1) sep+ '$'(ident as reg2) sep* '\n'
+ | sep* (key_w as op) sep+ '$' (ident as reg1) sep+ '$'(ident as reg2) sep* ('\n' | '\r')
 	{
-	Format.fprintf fft "%s%s%s@." (Hashtbl.find key_words op) (Hashtbl.find registres reg1) (Hashtbl.find registres reg2) ;
+	Format.fprintf fft "%s%s%s@." (Hashtbl.find key_words op) (Hashtbl.find registres reg1) (Hashtbl.find registres reg2) ; decr nombre_lignes ;
 	assembleur fft lexbuf}
- | sep* (key_w as op) sep+ (ident as lab) sep* '\n'
+ | sep* (key_w as op) sep+ (ident as lab) sep* ('\n'|'\r')
 	{
-	Format.fprintf fft "%s%s@." (Hashtbl.find key_words op) (Hashtbl.find labels lab);
+	Format.fprintf fft "%s%s@." (Hashtbl.find key_words op) (Hashtbl.find labels lab); decr nombre_lignes ;
     	assembleur fft lexbuf}
- | sep *(key_w as op) sep+ (chiffre+ as i) sep* '\n' 
+ | sep *(key_w as op) sep+ (chiffre+ as i) sep* ('\n'|'\r') 
 	{
-	Format.fprintf fft "%s%s@." (Hashtbl.find key_words op) (int_to_string (int_of_string i)) ;
+	Format.fprintf fft "%s%s@." (Hashtbl.find key_words op) (int_to_string (int_of_string i)) ; decr nombre_lignes ;
 	assembleur fft lexbuf } 
  | "(*" {comment lexbuf ; assembleur fft lexbuf}
- | sep* ident sep* ':' sep* ('\n'?) {assembleur fft lexbuf}
- | sep* '\n' {assembleur fft lexbuf}
+ | sep* ident sep* ':' sep* (('\n'|'\r')?) {assembleur fft lexbuf}
+ | sep* ('\n'|'\r') {assembleur fft lexbuf}
  | _ { raise (Assembleur_error "syntax_error")}
  | eof {}
 
@@ -105,19 +107,19 @@ and comment = parse
  | eof {raise (Assembleur_error "unfinished comment\n")}
  | _ {comment lexbuf}
 {
-
+let options = ["-lines",Arg.Int (fun x -> nombre_lignes := x), "complète avec des lignes de 0 si nécessaire"]
 let usage = "usage : assembleur file" 
 let ifile = ref ""
 let ofile = ref "" 
 let set_file f s = f := s 
 let main () = 
 begin
- Arg.parse [] (set_file ifile) usage ; 
+ Arg.parse options (set_file ifile) usage ; 
  if !ifile="" then begin Format.eprintf "Aucun fichier à compiler\n@?"; exit 1 end; 
 
  if not (Filename.check_suffix !ifile ".asm") then begin
     Format.eprintf "Le fichier d'entrée doit avoir l'extension .asm\n@?";
-    Arg.usage [] usage;
+    Arg.usage options usage;
     exit 1
   end;
   ofile := (Filename.chop_suffix !ifile ".asm") ^ ".rom" ;
@@ -129,8 +131,14 @@ begin
   let f2 = open_in !ifile in 
   let buf2 = Lexing.from_channel f2 in 
   let output = open_out !ofile in
-  let out_fmt = Format.formatter_of_out_channel output in 
+  let out_fmt = Format.formatter_of_out_channel output in
+  Format.fprintf out_fmt "%d 16\n" (!nombre_lignes) ;
   assembleur out_fmt buf2 ;
+  if !nombre_lignes <0 then Format.eprintf "Warning : bad number of lines \n" ;
+  while (!nombre_lignes > 0) do 
+	Format.fprintf out_fmt "0000000000000000\n" ;
+	decr nombre_lignes ;
+  done ;
   Format.fprintf out_fmt "@." ;
   close_in f2 ;
   close_out output ;

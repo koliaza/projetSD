@@ -28,7 +28,7 @@ let option_list =
 				 "Size (in word) of the rom array";
 	 "-ramfile", Arg.String (fun s -> options.ram_file <- s),
 				 "address of the ram file";
-	 "-romfile", Arg.String (fun s -> options.ram_file <- s),
+	 "-romfile", Arg.String (fun s -> options.rom_file <- s),
 				 "address of the rom file"
 	 (*"-raminspect", Arg.List (fun l -> options.ramlist <- l),
 				 "IntList of the ram addresses to follow";*)

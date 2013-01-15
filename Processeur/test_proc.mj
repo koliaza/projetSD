@@ -246,11 +246,6 @@ alu(a:[8],b:[8],config:[8]) = (s:[8]) where
 
 end where
 
-main(a:[8],b:[8],c:[8]) = (s:[8]) where 
-	s = alu(a,b,c)
-
-end where
-
 
 
 

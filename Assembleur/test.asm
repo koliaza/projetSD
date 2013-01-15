@@ -1,6 +1,3 @@
-	li 0
-	xor $sp,$sp
-	or $sp,$ax
-	li 1	
+	li 10	
 	sw $sp,$ax
 
