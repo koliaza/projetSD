@@ -52,7 +52,7 @@ jour:
 exit:
 	li $sp,0
 	sw $sp,$cx
-
+	jmp secondes
 	
 
 	  

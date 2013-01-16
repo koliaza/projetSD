@@ -4,7 +4,7 @@ open Def
 				
 let options = {oprint = true; oschedule = false; odebug = false; 
 			   overbose = false; osteps = -1; oclock = 1.; 
-			   ramsize=256; romsize=256; ramlist = [] ;
+			   ramlist = [] ;
 			   ram_file=""; rom_file=""}
 (* on modifie les options au fur et a mesure *)
 (*fin des options *)
@@ -22,10 +22,6 @@ let option_list =
                "clock speed to simulate";
 	 "-verbose", Arg.Unit (fun () -> options.overbose <- true),
                  "print all the outputs";
-	 "-ramsize", Arg.Int  (fun x -> options.ramsize <- x),
-				 "Size (in word) of the ram array";
-	 "-romsize", Arg.Int  (fun x -> options.ramsize <- x),
-				 "Size (in word) of the rom array";
 	 "-ramfile", Arg.String (fun s -> options.ram_file <- s),
 				 "address of the ram file";
 	 "-romfile", Arg.String (fun s -> options.rom_file <- s),

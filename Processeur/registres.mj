@@ -43,7 +43,7 @@ mem_reg(write_enable,in) = o where
 	o = reg(input) ;
 end where
 	
-reg2(write_enable,in:[2]) = (out:[2]) where
+reg2bit(write_enable,in:[2]) = (out:[2]) where
 	out = mem_reg(write_enable,in[0]).mem_reg(write_enable,in[1]) ;
 end where
 
@@ -69,3 +69,4 @@ reg_7 = reg8(w_e[7],in) ;
 all_reg = reg_0 . reg_1 . reg_2 . reg_3 . reg_4 . reg_5 . reg_6 . reg_7   ;
 out = multi_mux<8,3>(adress_1,all_reg) . multi_mux<8,3>(adress_2,all_reg)
 end where
+

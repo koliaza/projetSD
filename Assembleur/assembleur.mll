@@ -26,7 +26,7 @@ let lkw = [
 "jm","00001100" ;
 "jme","00001100" ;
 "jne","00000000" ;
-"jr","" ; (*non implementé*)
+"jr","00111100" ; 
 "test","00100000" ;
 "tests","00100100" ;
 "li", "01110000" ;
@@ -41,7 +41,7 @@ let lkw = [
 "shr","11101000" ;
 "sla","110011000" ;
 "sla","11011000" ;
-"move","" (*non implementé*)
+"move","10110000"
 ] 
 
 let () = List.iter (fun (key,code) -> Hashtbl.add key_words key code) lkw 
@@ -66,6 +66,10 @@ let int_to_string i =
 	  s.[j] <- if (i/(1 lsl j)) mod 2 = 0 then '0' else '1' ;
 	done ;
 	s
+
+let newline lexbuf = 
+	let pos = lexbuf.lex_curr_p in 
+	lexbuf.lex_curr_p <- {pos with pos_lnum = pos.pos_lnum +1; pos_bol = pos.pos_cnum}
 }
 
 let key_w = (['a'-'z'] | ['A'-'Z'])+
@@ -75,42 +79,62 @@ let ident = (alpha|'_') (alpha | chiffre |'_')*
 let sep = '\t' | ' ' | ','
 
 rule get_lab i = parse 
- | sep* (ident as lab) sep* ":" sep* {if Hashtbl.mem labels lab 
+ | sep* (ident as lab) sep* ":" sep* ('\n'|"\r\n") {if Hashtbl.mem labels lab 
 			then (raise (Assembleur_error "label defined twice"))
-			else Hashtbl.add labels lab (int_to_string i)}
- | '\n' {new_line lexbuf ; get_lab i lexbuf}
+			else Hashtbl.add labels lab (int_to_string i) ;
+			get_lab i lexbuf}
+ | sep* ('\n'|"\r\n") {newline lexbuf ; get_lab i lexbuf}
+ | sep {get_lab i lexbuf}
  | eof {}
  | "(*" {comment lexbuf ; get_lab i lexbuf}
- | [^'\n']* '\n' {new_line lexbuf ; get_lab (i+1) lexbuf}
+ | sep* key_w  sep+ '$' ident sep+ '$' ident sep* ('\n' | "\r\n")
+	{newline lexbuf ; get_lab (i+1) lexbuf}
+ | sep* key_w sep+ '$' ident sep* ('\n' | "\r\n")
+	{newline lexbuf ; get_lab (i+1) lexbuf}
+ | sep* key_w  sep+ ident sep* ('\n'|"\r\n")
+	{newline lexbuf ; get_lab (i+1) lexbuf}	
+ | sep* key_w  sep+ chiffre+ sep* ('\n'|"\r\n") 
+	 {newline lexbuf ; get_lab (i+1) lexbuf}
+ | _  {}
 
 and assembleur fft = parse 
- | sep* (key_w as op) sep+ '$' (ident as reg1) sep+ '$'(ident as reg2) sep* ('\n' | '\r')
+ | sep* (key_w as op) sep+ '$' (ident as reg1) sep+ '$'(ident as reg2) sep* ('\n' | "\r\n")
 	{
-	new_line lexbuf ;
+	newline lexbuf ;
 	Format.fprintf fft "%s%s%s@." (Hashtbl.find key_words op) (Hashtbl.find registres reg1) (Hashtbl.find registres reg2) ;
 	decr nombre_lignes ;
 	assembleur fft lexbuf
 	}
 
- | sep* (key_w as op) sep+ (ident as lab) sep* ('\n'|'\r')
+ | sep* (key_w as op) sep+ '$'(ident as reg1) sep* ('\n' | "\r\n")
 	{
-	new_line lexbuf ;
+	newline lexbuf ;
+	Format.fprintf fft "%s%s0000@." (Hashtbl.find key_words op) (Hashtbl.find registres reg1)  ;
+	decr nombre_lignes ;
+	assembleur fft lexbuf
+	}
+
+ | sep* (key_w as op) sep+ (ident as lab) sep* ('\n'|"\r\n")
+	{
+	newline lexbuf ;
 	Format.fprintf fft "%s%s@." (Hashtbl.find key_words op) (Hashtbl.find labels lab); 
 	decr nombre_lignes ;
     	assembleur fft lexbuf
 	}
+ | sep* ident sep* ':' sep* ('\n' | "\r\n") {newline lexbuf ; assembleur fft lexbuf}
 
- | sep *(key_w as op) sep+ (chiffre+ as i) sep* ('\n'|'\r') 
+ | sep* (key_w as op) sep+ (chiffre+ as i) sep* ('\n'|"\r\n") 
 	{
-	new_line lexbuf ;
+	newline lexbuf ;
 	Format.fprintf fft "%s%s@." (Hashtbl.find key_words op) (int_to_string (int_of_string i)) ; decr nombre_lignes ;
 	assembleur fft lexbuf } 
 
  | "(*" {comment lexbuf ; assembleur fft lexbuf}
 
- | sep* ident sep* ':' sep* ('\n'|'\r') { new_line lexbuf ; assembleur fft lexbuf}
- | sep* ('\n'|'\r') {new_line lexbuf ; assembleur fft lexbuf}
- | _ { raise (Assembleur_error "syntax_error")}
+ | sep* ident sep* ':' sep* ('\n'|"\r\n") { newline lexbuf ; assembleur fft lexbuf}
+ | ('\n'|"\r\n") {newline lexbuf ; assembleur fft lexbuf}
+ | sep {assembleur fft lexbuf}
+ | _ as c  { print_char c ; print_line lexbuf ; raise (Assembleur_error "syntax_error")}
  | eof {}
 
 
@@ -119,7 +143,11 @@ and comment = parse
  | "(*" {comment lexbuf ; comment lexbuf}
  | eof {raise (Assembleur_error "unfinished comment\n")}
  | [^'\n'] {comment lexbuf}
- | '\n' {new_line lexbuf ; comment lexbuf}
+ | '\n' {newline lexbuf ; comment lexbuf}
+
+and print_line = parse 
+ | '\n' {}
+ | _ as c {print_char c ; print_line lexbuf}
 {
 let options = ["-lines",Arg.Int (fun x -> nombre_lignes := x), "complète avec des lignes de 0 si nécessaire"]
 let usage = "usage : assembleur file" 
@@ -157,7 +185,7 @@ begin
   close_in f2 ;
   close_out output ;
   Format.printf "%s :Done @." (!ifile) ;
-  with Assembleur_error s -> Format.eprintf "file %s : line %d \nErreur pour l'assembleur : %s@." (!ifile) (buf.lex_curr_p.pos_lnum) s ; exit 1
+  with Assembleur_error s -> Format.eprintf "file %s : line %d \nErreur pour l'assembleur : %s@." (!ifile) (buf2.lex_curr_p.pos_lnum) s ; exit 1
 end 
 
 

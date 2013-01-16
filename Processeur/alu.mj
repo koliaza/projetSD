@@ -153,7 +153,7 @@ alu(a:[8],b:[8],config:[8]) = (s:[8]) where
   (sortie_mults,ovf_mults) = signed_multiplier8(a,b) ; 
 
 
-  sortie_arith = multi_mux<8,2>(config[2..3],sortie_adder . sortie_mult . sortie_mults . zero8) ;
+  sortie_arith = multi_mux<8,2>(config[2..3],sortie_adder . sortie_mult . sortie_mults . b) ;
   sortie_and = and8(a,b) ; 
   sortie_or = or8(a,b) ;
   sortie_xor = xor8(a,b) ;
@@ -164,10 +164,5 @@ alu(a:[8],b:[8],config:[8]) = (s:[8]) where
   sortie_logique = multi_mux<8,3>(config[2..4],allsorties) ;
   
   s = multi_mux<8,1>(config[1],sortie_arith . sortie_logique) ;
-
-end where
-
-main(a:[8],b:[8],c:[8]) = (s:[8]) where 
-	s = alu(a,b,c)
 
 end where

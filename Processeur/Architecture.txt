@@ -137,7 +137,7 @@ ADD reg1,reg2 10000000
 ADDS reg1,reg2 10000000 (*addition signée et non signée identique d'un point de vue circuit logique*)
   Addition signée reg1 <- reg1 + reg2
 
-MOVE reg1,reg2
+MOVE reg1,reg2 10110000
   reg1 <- reg2
   
 MUL reg1,reg2 10100000
@@ -200,6 +200,9 @@ JMP addr8 00000100
 
 JNE addr8 (not equal) 00000000
   Saut à addr8 si FLAG.(0) est à 0, passe à la suite sinon.
+
+JR reg1 00100000
+  Saut à l'adresse contenue dans reg1
      
 TEST reg1,reg2 00100000
   Fait un comparaison de reg1 et de reg2: (non signée)

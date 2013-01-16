@@ -6,7 +6,6 @@ open Hashtbl
 type  moption = {mutable oprint : bool; mutable oschedule : bool;
 				mutable odebug : bool; mutable overbose : bool;
 				mutable osteps : int; mutable oclock : float;
-				mutable ramsize :int; mutable romsize :int;
 				mutable ram_file :string; mutable rom_file : string;
 				mutable ramlist : int list}
 (* principales differences:
