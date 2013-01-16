@@ -1,4 +1,6 @@
 {
+
+open Lexing
 (*Remarque : 
 non implémentés : subs, mults, jr*)
 
@@ -76,27 +78,38 @@ rule get_lab i = parse
  | sep* (ident as lab) sep* ":" sep* {if Hashtbl.mem labels lab 
 			then (raise (Assembleur_error "label defined twice"))
 			else Hashtbl.add labels lab (int_to_string i)}
- | '\n' {get_lab i lexbuf}
+ | '\n' {new_line lexbuf ; get_lab i lexbuf}
  | eof {}
  | "(*" {comment lexbuf ; get_lab i lexbuf}
- | [^'\n']* '\n' {get_lab (i+1) lexbuf}
+ | [^'\n']* '\n' {new_line lexbuf ; get_lab (i+1) lexbuf}
 
 and assembleur fft = parse 
  | sep* (key_w as op) sep+ '$' (ident as reg1) sep+ '$'(ident as reg2) sep* ('\n' | '\r')
 	{
-	Format.fprintf fft "%s%s%s@." (Hashtbl.find key_words op) (Hashtbl.find registres reg1) (Hashtbl.find registres reg2) ; decr nombre_lignes ;
-	assembleur fft lexbuf}
+	new_line lexbuf ;
+	Format.fprintf fft "%s%s%s@." (Hashtbl.find key_words op) (Hashtbl.find registres reg1) (Hashtbl.find registres reg2) ;
+	decr nombre_lignes ;
+	assembleur fft lexbuf
+	}
+
  | sep* (key_w as op) sep+ (ident as lab) sep* ('\n'|'\r')
 	{
-	Format.fprintf fft "%s%s@." (Hashtbl.find key_words op) (Hashtbl.find labels lab); decr nombre_lignes ;
-    	assembleur fft lexbuf}
+	new_line lexbuf ;
+	Format.fprintf fft "%s%s@." (Hashtbl.find key_words op) (Hashtbl.find labels lab); 
+	decr nombre_lignes ;
+    	assembleur fft lexbuf
+	}
+
  | sep *(key_w as op) sep+ (chiffre+ as i) sep* ('\n'|'\r') 
 	{
+	new_line lexbuf ;
 	Format.fprintf fft "%s%s@." (Hashtbl.find key_words op) (int_to_string (int_of_string i)) ; decr nombre_lignes ;
 	assembleur fft lexbuf } 
+
  | "(*" {comment lexbuf ; assembleur fft lexbuf}
- | sep* ident sep* ':' sep* (('\n'|'\r')?) {assembleur fft lexbuf}
- | sep* ('\n'|'\r') {assembleur fft lexbuf}
+
+ | sep* ident sep* ':' sep* ('\n'|'\r') { new_line lexbuf ; assembleur fft lexbuf}
+ | sep* ('\n'|'\r') {new_line lexbuf ; assembleur fft lexbuf}
  | _ { raise (Assembleur_error "syntax_error")}
  | eof {}
 
@@ -105,7 +118,8 @@ and comment = parse
  | "*)" {}
  | "(*" {comment lexbuf ; comment lexbuf}
  | eof {raise (Assembleur_error "unfinished comment\n")}
- | _ {comment lexbuf}
+ | [^'\n'] {comment lexbuf}
+ | '\n' {new_line lexbuf ; comment lexbuf}
 {
 let options = ["-lines",Arg.Int (fun x -> nombre_lignes := x), "complète avec des lignes de 0 si nécessaire"]
 let usage = "usage : assembleur file" 
@@ -122,19 +136,19 @@ begin
     Arg.usage options usage;
     exit 1
   end;
-  ofile := (Filename.chop_suffix !ifile ".asm") ^ ".rom" ;
-
+  ofile := (Filename.chop_suffix !ifile ".asm") ^ ".rom" ; 
  let f = open_in !ifile in
   let buf = Lexing.from_channel f in
   get_lab 0 buf ;
   close_in f ;
   let f2 = open_in !ifile in 
   let buf2 = Lexing.from_channel f2 in 
+  try
   let output = open_out !ofile in
   let out_fmt = Format.formatter_of_out_channel output in
   Format.fprintf out_fmt "%d 16\n" (!nombre_lignes) ;
   assembleur out_fmt buf2 ;
-  if !nombre_lignes <0 then Format.eprintf "Warning : bad number of lines \n" ;
+  if !nombre_lignes <0 then Format.eprintf "Warning : bad number of lines @." ;
   while (!nombre_lignes > 0) do 
 	Format.fprintf out_fmt "0000000000000000\n" ;
 	decr nombre_lignes ;
@@ -142,9 +156,15 @@ begin
   Format.fprintf out_fmt "@." ;
   close_in f2 ;
   close_out output ;
+  Format.printf "%s :Done @." (!ifile) ;
+  with Assembleur_error s -> Format.eprintf "file %s : line %d \nErreur pour l'assembleur : %s@." (!ifile) (buf.lex_curr_p.pos_lnum) s ; exit 1
 end 
 
-let () = main () 
+
+let () = main ()
+
+
+
 }
 
 
