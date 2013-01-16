@@ -201,7 +201,7 @@ JMP addr8 00000100
 JNE addr8 (not equal) 00000000
   Saut à addr8 si FLAG.(0) est à 0, passe à la suite sinon.
 
-JR reg1 00100000
+JR reg1 00111100
   Saut à l'adresse contenue dans reg1
      
 TEST reg1,reg2 00100000
