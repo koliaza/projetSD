@@ -1,3 +1,3 @@
-	li 10	
+	li 7	
 	sw $sp,$ax
 

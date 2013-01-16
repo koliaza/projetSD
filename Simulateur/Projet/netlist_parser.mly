@@ -1,13 +1,29 @@
 %{
  open Netlist_ast
 
- let value_of_string s =
-   if String.length s = 1 then VBit (s.[0] = '1')
-   else VBitArray (Array.init (String.length s) (fun i -> s.[i] = '1'))
+ let bool_of_string s = match s with
+  | "t" | "1" -> true
+  | "f" | "0" -> false
+  | _ -> raise Parsing.Parse_error
 
+ let bool_array_of_string s =
+   let a = Array.make (String.length s) false in
+   for i = 0 to String.length s - 1 do
+     a.(i) <- bool_of_string (String.sub s i 1)
+   done;
+   a
+
+ let value_of_const s =
+   let n = String.length s in
+   if n = 0 then
+     raise Parsing.Parse_error
+   else if n = 1 then
+     VBit (bool_of_string s)
+   else
+     VBitArray (bool_array_of_string s)
 %}
 
-%token <string> INT
+%token <string> CONST
 %token <string> NAME
 %token AND MUX NAND OR RAM ROM XOR REG NOT
 %token CONCAT SELECT SLICE
@@ -36,22 +52,25 @@ exp:
   | NAND x=arg y=arg { Ebinop(Nand, x, y) }
   | XOR x=arg y=arg { Ebinop(Xor, x, y) }
   | MUX x=arg y=arg z=arg { Emux(x, y, z) }
-  | ROM addr=INT word=INT ra=arg
-    { Erom(int_of_string addr,int_of_string word, ra) }
-  | RAM addr=INT word=INT ra=arg we=arg wa=arg data=arg
-    { Eram(int_of_string addr, int_of_string word, ra, we, wa, data) }
+  | ROM addr=int word=int ra=arg
+    { Erom(addr, word, ra) }
+  | RAM addr=int word=int ra=arg we=arg wa=arg data=arg
+    { Eram(addr, word, ra, we, wa, data) }
   | CONCAT x=arg y=arg
      { Econcat(x, y) }
-  | SELECT idx=INT x=arg
-     { Eselect (int_of_string idx, x) }
-  | SLICE min=INT max=INT x=arg
-     { Eslice (int_of_string min,int_of_string max, x) }
+  | SELECT idx=int x=arg
+     { Eselect (idx, x) }
+  | SLICE min=int max=int x=arg
+     { Eslice (min, max, x) }
 
 arg:
-  | n=INT { Aconst (value_of_string n) }
+  | n=CONST { Aconst (value_of_const n) }
   | id=NAME { Avar id }
 
 var: x=NAME ty=ty_exp { (x, ty) }
 ty_exp:
   | /*empty*/ { TBit }
-  | COLON n=INT { TBitArray (int_of_string n) }
+  | COLON n=int { TBitArray n }
+
+int:
+  | c=CONST { int_of_string c }

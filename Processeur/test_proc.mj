@@ -339,7 +339,7 @@ is_sw_real = is_sw and ((not (is_arith)) and is_memoire  ) ;
 is_test = isequal4(bit_4,0b1000) and (not(is_arith or is_memoire)) ;
 is_tests = isequal4(bit_4,0b1001) and (not(is_arith or is_memoire)) ;
 
-res_intermediaire_load = mux8(is_li,argument_8bit,ram<8,8>(reg2,0,0,0) ) ; (* li ou lw *)
+res_intermediaire_load = mux8(is_li,argument_8bit,ram<8,8>(reg2,0,reg2,reg2) ) ; (* li ou lw *)
 temp = ram<8,8>(reg1,is_sw_real,reg1,reg2) ; (*temp ne sert à rien, c'est juste pour écrire *)
 
 
