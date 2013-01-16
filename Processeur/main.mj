@@ -50,7 +50,7 @@ bit_2 = instruction [2..3] ;
 bit_4 = instruction [2..5] ;
 
 
-sortie_bloc_registre = bloc_registre(need_write_arg1,mux4(is_jal_real,0b1111 , mux4(is_li,0b0000,argument_4bit_1)),argument_4bit_2,res_a_ecrire_eventuellement) ;
+sortie_bloc_registre = bloc_registre(need_write_arg1,mux4(is_jal_real,0b1111 , mux4(is_li_real,0b0000,argument_4bit_1)),argument_4bit_2,res_a_ecrire_eventuellement) ;
 reg1 = sortie_bloc_registre[0..7] ;
 reg2 = sortie_bloc_registre[8..15] ;
 res_alu = alu(reg1,reg2,instruction[0..7]) ;
@@ -77,16 +77,18 @@ is_sw = isequal2(bit_2,0b01) ;
 is_jal_real = is_jal and (not(is_arith or is_memoire)) ;
 is_li_real = is_li and ((not (is_arith)) and is_memoire  ) ;
 is_lw_real = is_lw and ((not (is_arith)) and is_memoire  ) ;
+is_sw_real = is_sw and ((not (is_arith)) and is_memoire  ) ;
 is_test = isequal4(bit_4,0b1000) and (not(is_arith or is_memoire)) ;
 is_tests = isequal4(bit_4,0b1001) and (not(is_arith or is_memoire)) ;
 
-res_intermediaire_load = mux8(is_li,argument_8bit,(*ram<8,8>(reg2,0,0,0) *) temp (*c'est pas ca ?*) ) ;
-temp = ram<8,8>(reg1,is_sw,reg1,reg2) ;
+res_intermediaire_load = mux8(is_li,argument_8bit,ram<8,8>(reg2,0,0,0) ) ; (* li ou lw *)
+temp = ram<8,8>(reg1,is_sw_real,reg1,reg2) ; (*temp ne sert à rien, c'est juste pour écrire *)
 
 
-flags  = reg2 (is_test, mux2(is_tests, comparesigned<8>(reg1,reg2), compare<8> (reg1,reg2) )) ;
+flags  = reg2bit(1, mux2(is_test, compare<8> (reg1,reg2), mux2(is_tests, comparesigned<8>(reg1,reg2), flags ))) ;
 (*addr_jump = argument_8bit*) 
-will_jump = not(is_arith) and not(is_memoire) and mux(is_jal or is_jmp, 1, mux (is_je and (*à vérifier*) flags[0], 1, mux ( is_jl, not(flags[1]), mux( is_jle, flags[0] or (not flags[1]), mux (is_jm, flags[1] and (not(flags[0])), mux (is_jme, flags[1], mux(is_jne, not(flags[0]), 0)      )      )        )      )   ) )   ;
+will_jump = not(is_arith) and not(is_memoire) and mux(is_jal or is_jmp, 1, mux (is_je, flags[0], mux ( is_jl, not(flags[1]), mux( is_jle, flags[0] or (not flags[1]), mux (is_jm, flags[1] and (not(flags[0])), mux (is_jme, flags[1], mux(is_jne, not(flags[0]), 0)      )      )        )      )   ) )   ;
+
 
 (pc_plus_1,inutile) = adder8<8>(pc,0b00000000,1) ;
 
