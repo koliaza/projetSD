@@ -1,0 +1,16 @@
+-> Machine minimaliste mais qui fasse plein de trucs
+-> regrets : trop de copie de données (slice et concat)
+-> organisation (github) répartition des tâches pour le simulateur
+-> architecture proche de celle de mips
+-> pourquoi il est très bien notre processeur.
+	- très petit -> systèmes embarqués
+	- pas cher à produire (?)
+-> comment on traite les registres, rom et ram
+-> comment on a modifié le simulateur
+-> assembleur (vérifications à charge de l'utilisateur)
+-> fichiers roms et ram externes
+-> diagramme complet assembleur, fichier rom ram, net_list ... (*diagramme DONE*)
+-> architecture avec schema (*Schema done*)
+-> difficultés rencontrées
+	- imaginer les chose =P
+	- 

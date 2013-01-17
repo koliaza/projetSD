@@ -4,7 +4,7 @@ open Def
 				
 let options = {oprint = true; oschedule = false; odebug = false; 
 			   overbose = false; osteps = -1; oclock = 1.; 
-			   ramlist = [] ;
+			   ramlist = []; optionclock = false ;
 			   ram_file=""; rom_file=""}
 (* on modifie les options au fur et a mesure *)
 (*fin des options *)
@@ -18,8 +18,10 @@ let option_list =
               "prints step by step and waits for user control"; 
 	 "-n", Arg.Int (fun x -> options.osteps <- x),
            "Number of steps to simulate";
-	 "-clock", Arg.Float (fun x -> options.oclock <- x),
+	 "-oclock", Arg.Float (fun x -> options.oclock <- x),
                "clock speed to simulate";
+	 "-clock", Arg.Unit (fun x -> options.optionclock <- true),
+               "to work with the clock program";
 	 "-verbose", Arg.Unit (fun () -> options.overbose <- true),
                  "print all the outputs";
 	 "-ramfile", Arg.String (fun s -> options.ram_file <- s),

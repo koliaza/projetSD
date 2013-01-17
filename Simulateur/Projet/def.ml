@@ -5,6 +5,7 @@ open Hashtbl
 (* type pour la gestion des options dans le main *) 
 type  moption = {mutable oprint : bool; mutable oschedule : bool;
 				mutable odebug : bool; mutable overbose : bool;
+				mutable optionclock : bool;
 				mutable osteps : int; mutable oclock : float;
 				mutable ram_file :string; mutable rom_file : string;
 				mutable ramlist : int list}

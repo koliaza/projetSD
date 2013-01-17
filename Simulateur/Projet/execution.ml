@@ -139,14 +139,31 @@ let cell_value ram a =
   match ram.(a) with
     |VBit v ->  (if v then -1 else -2)
  (* arbitrary choices but the case shouldn't occur*)
-    |VBitArray v -> let f x b = if b then 2*x+1 else 2*x in 
-                    Array.fold_left f 0 v
+    |VBitArray v -> let f  b x = if b then 2*x+1 else 2*x in 
+                    Array.fold_right f v 0
 
-let print_time ram  hour minute second = 
-Printf.printf "%d:%d:%d\n"  (cell_value ram hour )
-  (cell_value ram minute )(cell_value ram second )
+let print_time ram  day hour minute second = 
+Format.printf "%d , %d::%d::%d@."  (cell_value ram day )(cell_value ram hour )
+  (cell_value ram minute )(cell_value ram second );
+flush_all()
 
-	
+let write_to_ram dest i  ram= 
+ let s = Array.create 8 false in 
+ for j = 0 to 7 do 
+   s.(j) <- if (i/(1 lsl j)) mod 2 = 0 then false else true ;
+ done ;
+ ram.(dest) <- VBitArray(s)
+
+
+let settime ram = 
+  let t= Unix.gmtime(Unix.time ()) in 
+  write_to_ram 1 t.Unix.tm_sec ram;
+  write_to_ram 2 t.Unix.tm_min ram;
+  write_to_ram 3 t.Unix.tm_hour ram;
+  write_to_ram 4 t.Unix.tm_mday ram
+
+let ramcheck ram i = 
+if ((cell_value ram i) == 0) then true else false
 
 (*fonction pour récupérer les inputs de l'utilisateur en mode pas à pas, il faut lui passer en argument
 la liste des inputs, et l'environnement qui donne le type de chaque variable*)		
@@ -176,14 +193,28 @@ let rec execution_a_step mp m_option=
 	if m_option.overbose then print_outputs (mp.mp_tabvar) (mp.mp_outputs) ;
 	print_ram_list mp.mp_tabram m_option.ramlist
 	
-
 	
 let execution mp m_option = (* mp de type Mprogramme *) 
-	
-  if m_option.osteps  = -1 then 
-    while(true) do
+  let initialtime = ref (Unix.time()) in 
+  if m_option.osteps  = -1   then 
+   begin
+flush_all();
+   write_to_ram 0 0 mp.mp_tabram;
+ if m_option.optionclock then settime mp.mp_tabram;
+   while(true) do
+    while(ramcheck mp.mp_tabram 0) do
       execution_a_step mp m_option
-    done
+    done;
+    if m_option.optionclock then 
+	
+	begin
+		print_time mp.mp_tabram 4 3 2 1;
+		while ((Unix.time()) = !initialtime) do () done;
+  		write_to_ram 0 0 mp.mp_tabram;
+		initialtime := !initialtime +.1.;
+	end
+   done
+   end
   else 
    for i = 1 to m_option.osteps do
      execution_a_step mp m_option
