@@ -56,6 +56,21 @@
 \end{itemize}
 \end{frame}
 
+\subsection{Ram file}
+
+\begin{frame}
+256 8 \\
+0-4; 10 ;  \\
+00000000\\
+00000000\\
+00000000\\
+00000000\\
+00000000\\
+00000000\\
+00000000\\
+.....
+%exemple de fichier ram
+\end{frame}
 
 \subsection{Assembler - rom file}
 
@@ -65,7 +80,7 @@
 %We can put some of the architecture here
 %maybe important instructions supported by our processor
 %labels inplemented
-%
+
 \end{frame}
 
 \begin{frame}
@@ -90,28 +105,46 @@
 % utilises, ...
 \end{frame}
 
-\subsection{Fichier ram}
-
-\begin{frame}
-256 8 \\
-0-4;  \\
-00000000\\
-00000000\\
-00000000\\
-00000000\\
-00000000\\
-00000000\\
-00000000\\
-.....
-%exemple de fichier ram
-\end{frame}
-
 \subsection{Processor architecture}
 
 \begin{frame}
 \frametitle{The processor}
 \includegraphics[scale=0.4]{schema_proc.png}
 
+\end{frame}
+
+\begin{frame}
+\begin{itemize}
+\item instructions on 16 bits \\
+   \vspace{0.5 cm}
+  \hspace{1.5 cm} \includegraphics[scale= 0.4]{instructions.png}
+  \newline
+% image pour décrire les différentes parties de l'instruction
+\item RAM and registers on 8 bits 
+\end{itemize}
+\end{frame} 
+
+\begin{frame}
+\frametitle{Short description of our instructions}
+\begin{itemize}
+\item {Jumps
+   \begin{itemize}
+     \item test instruction - two bits flag register
+     \item jne jal je jl jle jm jme jmp jne jr
+   \end{itemize}
+}
+\item {Memory interface
+   \begin{itemize}
+     \item li lw sw
+   \end{itemize}
+}
+\item {Arithmetic
+   \begin{itemize}
+     \item add sub mul not and or xor
+     \item move shl shr sra
+   \end{itemize}
+}
+\end{itemize}
 \end{frame}
 
 \begin{frame}
@@ -141,7 +174,7 @@
 \section{Demonstration}
 
 \begin{frame}
-Demonstration
+\includegraphics[scale= 0.4]{demo.png}
 \end{frame}
 
 
