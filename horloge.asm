@@ -1,4 +1,4 @@
-
+ 
 	(* contenu de la mémoire:
 		0: 0 au départ : 0 si calcul pas fini, 1 si calcul fini 
 		1: secondes
@@ -6,53 +6,55 @@
 		3: heures
 		4: jour
 	*)
-	li cx,1
+	li 1
+	move $cx, $ax
+	li 0
+	move $dx, $ax
 secondes:
 	li 1
         move $sp, $ax
         lw $ex, $sp
 	add $ex,$cx
 	li 60
-	move $bx,ax
+	move $bx,$ax
 	test $ex,$bx
-	jm minutes
+	jme minutes
 	sw $sp, $ex
 	jmp exit
 minutes:
-	sw $sp,$cx 	
+	sw $sp,$dx 	
 	li 2
         move $sp, $ax
         lw $ex, $sp
 	add $ex,$cx
 	li 60
-	move $bx,ax
+	move $bx,$ax
 	test $ex,$bx
-	jm heures
+	jme heures
 	sw $sp, $ex
 	jmp exit
 heures:
-	sw $sp,$cx
+	sw $sp,$dx
 	li 3
         move $sp, $ax
         lw $ex, $sp
 	add $ex,$cx
 	li 24
-	move $bx,ax
+	move $bx,$ax
 	test $ex,$bx
-	jm jour
+	jme jour
 	sw $sp, $ex
 	jmp exit
 jour:
-	sw $sp,$cx	
+	sw $sp,$dx	
 	li 4
         move $sp, $ax
         lw $ex, $sp
 	add $ex,$cx
 	sw $sp,$ex
 exit:
-	li $sp,0
+	li 0
+	move $sp,$ax
 	sw $sp,$cx
 	jmp secondes
-	
-
 	  

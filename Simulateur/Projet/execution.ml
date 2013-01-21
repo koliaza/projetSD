@@ -143,7 +143,7 @@ let cell_value ram a =
                     Array.fold_right f v 0
 
 let print_time ram  day hour minute second = 
-Format.printf "%d , %d::%d::%d@."  (cell_value ram day )(cell_value ram hour )
+Format.printf "Local time : %d , %2d::%2d::%2d@."  (cell_value ram day )(cell_value ram hour )
   (cell_value ram minute )(cell_value ram second );
 flush_all()
 
@@ -156,7 +156,7 @@ let write_to_ram dest i  ram=
 
 
 let settime ram = 
-  let t= Unix.gmtime(Unix.time ()) in 
+  let t= Unix.localtime(Unix.time ()) in 
   write_to_ram 1 t.Unix.tm_sec ram;
   write_to_ram 2 t.Unix.tm_min ram;
   write_to_ram 3 t.Unix.tm_hour ram;
@@ -195,7 +195,8 @@ let rec execution_a_step mp m_option=
 	
 	
 let execution mp m_option = (* mp de type Mprogramme *) 
-  let initialtime = ref (Unix.time()) in 
+
+  let localtime = ref ((Unix.gettimeofday() +.1.)) in 
   if m_option.osteps  = -1   then 
    begin
 flush_all();
@@ -206,13 +207,30 @@ flush_all();
       execution_a_step mp m_option
     done;
     if m_option.optionclock then 
-	
-	begin
+	if m_option.clockfreq = 0. then
+		begin
+		let _ = Unix.system "clear\n" in
 		print_time mp.mp_tabram 4 3 2 1;
-		while ((Unix.time()) = !initialtime) do () done;
   		write_to_ram 0 0 mp.mp_tabram;
-		initialtime := !initialtime +.1.;
-	end
+		end 
+	else 
+		begin
+		localtime := !localtime+. (1. /. m_option.clockfreq);
+		let _ = Unix.system "clear\n" in
+		print_time mp.mp_tabram 4 3 2 1;
+		
+		if m_option.compare then 
+			begin
+			let t= Unix.localtime(Unix.time ()) in
+			Format.printf "Unix  time : %2d , %2d::%2d::%2d @." 
+			t.Unix.tm_mday t.Unix.tm_hour t.Unix.tm_min t.Unix.tm_sec;
+			flush_all();
+			end;
+		
+		while (Unix.gettimeofday() <= !localtime) do () done;
+  		write_to_ram 0 0 mp.mp_tabram;
+		end 
+
    done
    end
   else 

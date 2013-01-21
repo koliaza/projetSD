@@ -1,41 +1,78 @@
 \documentclass[a4paper]{article}
 \usepackage[latin1]{inputenc} 
 \usepackage[T1]{fontenc}
-\usepackage[francais]{babel}
 \usepackage{verbatim}
 
 
 
-\author{Nicolas Blanchard, Axel Davy et Marc Heinrich}
-\title{Présentation de notre simulateur}
+\author{Nicolas Blanchard, Axel Davy and Marc Heinrich}
+\title{Project Report}
+\date{September 2012 to January 2013}
 \begin{document}
 \maketitle
-\section{Comment exécuter notre simulateur}
-	Pour executer le programme, simplement lancer ocamlbuild -use-menhir main.native, ce qui génère l'executable main.native que l'on peut lancer avec les options désirées.
+\section{Compiling the simulator}
+	To compile, use ocamlbuild with the following options \newline
+        -use-menhir -lib unix main.native. 
+        This generates the main.native program that will be used later.
 
-\emph{Remarque :} dû à notre méthode d'implémentation des registres, le résultat contenu dans les \verb!_sch.net! peut être un peu déroutant lorsque des registres sont présents. En effet les registres se retrouvent dans un ordre arbitraire à la fin du fichier. Notre implémentation des registres est qu'ils donnent leur sortie avant l'exécution des équations, et qu'ils prennent leur entrées à la fin. Voilà pourquoi l'ordre des registres n'a pas d'importance dans les \verb!_sch.net!.  
 
-\section{Fonctionnement}
-Le simulateur est articulé autour d'un main qui gère la liste des options et lance dans l'ordre les différentes étapes indépendantes :
+\subsection{Inner workings}
+The simulator is organised around a main function that handles the option list (with Arg.parse) and initiates the different independent steps in the following order :
 \begin{itemize}
-     \item {Lecture de Netlist (par le module fourni)}
-     \item {Transformation par le scheduler (pas avec le même résultat que celui fourni sur le traitement des registres)}
-     \item {conversion de ce résultat dans un format (mprogram) permettant d'améliorer les performances ultérieures}
-     \item {Execution de ce mprogram.}
+     \item[-] { Netlist Parsing (via the given module)}
+     \item[-] {Transformation of the Netlist by scheduler}
+     \item[-] {Conversion into another format (mprogram) to improve later performance and facilitate debugging}
+     \item[-] {Execution of the mprogram.}
 \end{itemize}
-\section{Options disponibles}
-syntaxe : main (options) filename
+\subsection{Option list}
+syntax : main.native (options) filename
 \begin{itemize}
-     \item {n \textit{entier}: correspond au nombre d'étapes à executer (par défaut égal à -1 ce qui est équivalent à illimité)}
-     \item {noprint : n'imprime pas le résultat du scheduler}
-     \item {debug : lance en mode débug (permet de faire du pas à pas)}
-     \item {clock \textit{flottant}: permet de régler la fréquence d'horloge simulée, pas encore implémentée)}
-     \item {verbose : imprime à l'écran les sorties à chaque pas }
+     \item[-]{scheduleonly : Stops after printing the result of scheduling}
+     \item[-] {n \textit{integer}: Number of steps to simulate (default:
+         -1. Does not stop)}
+     \item[-] {noprint : Does not print the result of scheduling}
+     \item[-] {debug : prints step by step and waits for user control}
+     \item[-] {clock : to work with the clock program}
+     \item[-] {clockfreq \textit{float}: running frequency of the clock}
+     \item[-] {compare : also displays the computer time}
+     \item[-] {verbose : print all the outputs }
+     \item[-] {ramfile \textit{address}: address of the ram file}
+     \item[-] {romfile \textit{address}: address of the rom file}
 \end{itemize}
-\section{Difficultés rencontrées}
-Après la première séance du TD, nous avions une fonction scheduler qui permettait de faire un tri topologique et de mettre ainsi dans l'ordre les instructions d'un fichier netlist source. Mais nous avons eu beaucoup de mal à avoir une fonction qui marche aussi pour les registres. En effet il faut que la fonction ne détecte pas de cycle combinatoire quand il y a une boucle causée par un registre. De plus si deux registres sont chacuns connectés à la sortie de l'autre, on ne peut en exécuter un avant l'autre. Nous avons donc décidés d'enlever les liaisons des registres dans le graphe du tri topologique, ainsi le tri se fait sans considérer les registres, se qui coupe les éventuels cycles combinatoire qui auraient été répérés à cause d'une boucle de registre. Nous avons aussi fait en sorte que les registres donnent leurs sorties au début de l'exécution et capturent leur entrées à la fin de l'exécution. Pour cela nous avons mis les registres dans un liste pour donner leur sortie au début de l'exécution et nous les avons mis à la fin de la liste à exécuter pour qu'ils puissent capturer leur entrée.
-
-Comme le type ``programme'' était incomplet à notre goût on a crée un nouveau type Mprogramme : On souhaitait une liste des cas à traiter à part (comme les registres) et nous voulions que les équations soient composées de clés indiquant la valeur de leur arguments dans un tableau.
+When launched with incorrect parameters, main automatically displays the command list.
 
 
+\section{Compiling the assembler}
+Sipmly use : ocamlbuild assembleur.native
+
+To launch :  ./assembleur.native -lines 256 \textit{program.asm}
+\newline
+\newline
+The Assembler language is described in Architecture.txt 
+
+\section{The microprocessor}
+It is coded in the proc.mj file and has been precompiled into proc.net. It can be recompiled using MiniJazz
+
+\section{Using the clock program}
+The source code is in horloge.asm and has been compiled into horloge.rom.
+
+A correct ram file (consisting of blank memory) is given : horloge.ram
+
+To use the clock :
+
+./main.native -ramfile horloge.ram -romfile horloge.rom -clock [-compare] [-clockfreq
+frequency] proc.net 
+
+compare shows the difference between the local unix time and the time simulated by our program. There is always a 1 second lapse at first during the launch phase.
+clockfrequency is by default at 1, and corresponds to the speed at which one wants to simulate the program. Maximum observed speed show a gain of two orders of magnitude. To launch the program at maximum speed one can use 0.0 as a value (some small optimisations have been made for this case).
+
+\section{Problems we have encountered}
+\subsection{Part 1 : the simulator}
+After the first work session we had a scheduler function that did topological sorting and could output a sorted netlist file. However, taking the registers into account proved to be the hard part as it could conflict with the combinatorial loop detection. Also, two interconnected registers caused priority problems, so we chose to remove all links to the registers during the sorting phase, choosing to separate them as input-registers and output-registers, that are handled before and after execution of the netlist.  
+Also, the "programme" type wasn't exactly to our taste and we created the Mprogramme type to add the register list, and to improve the equations by storing their arguments as keys in an array.
+
+\subsection{Part 2: Assembler and Processor}
+
+The initial idea was to add the division and modulo into the processor (as super-instructions), but as time grew short the changes that needed to be made to add it made the idea too time-expensive. 
+They were however implemented as assembler functions. 
 \end{document}

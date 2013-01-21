@@ -2,8 +2,8 @@
 (* definition des options *)
 open Def
 				
-let options = {oprint = true; oschedule = false; odebug = false; 
-			   overbose = false; osteps = -1; oclock = 1.; 
+let options = {oprint = true; oschedule = false; odebug = false; compare = false;
+			   overbose = false; osteps = -1; clockfreq = 1.; 
 			   ramlist = []; optionclock = false ;
 			   ram_file=""; rom_file=""}
 (* on modifie les options au fur et a mesure *)
@@ -18,18 +18,18 @@ let option_list =
               "prints step by step and waits for user control"; 
 	 "-n", Arg.Int (fun x -> options.osteps <- x),
            "Number of steps to simulate";
-	 "-oclock", Arg.Float (fun x -> options.oclock <- x),
+	 "-clockfreq", Arg.Float (fun x -> options.clockfreq <- x),
                "clock speed to simulate";
 	 "-clock", Arg.Unit (fun x -> options.optionclock <- true),
                "to work with the clock program";
+	 "-compare", Arg.Unit (fun x -> options.compare <- true),
+               "to compare clock time with Unix time";
 	 "-verbose", Arg.Unit (fun () -> options.overbose <- true),
                  "print all the outputs";
 	 "-ramfile", Arg.String (fun s -> options.ram_file <- s),
 				 "address of the ram file";
 	 "-romfile", Arg.String (fun s -> options.rom_file <- s),
-				 "address of the rom file"
-	 (*"-raminspect", Arg.List (fun l -> options.ramlist <- l),
-				 "IntList of the ram addresses to follow";*)
+				 "address of the rom file"	
 				 ]
    
 let main_exec filename= 

@@ -169,8 +169,8 @@ SHL reg1,reg2 11001000
 SHR reg1,reg2 11101000
   décale reg1 de reg2 bits vers la droite
 
-SLA reg1, reg2 11011000
-  décale reg1 de reg2 bits vers la gauche en ajoutant des bits égaux au bit de signe
+SRA reg1, reg2 11011000
+  décale reg1 de reg2 bits vers la droite en ajoutant des bits égaux au bit de signe
 
 XOR reg1,reg2 11010000
   XOR logique reg1 <- re1 xor reg2

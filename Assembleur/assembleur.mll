@@ -24,7 +24,7 @@ let lkw = [
 "jl","00010100" ;
 "jle","00010000" ;
 "jm","00001100" ;
-"jme","00001100" ;
+"jme","00001000" ;
 "jne","00000000" ;
 "jr","00111100" ; 
 "test","00100000" ;
@@ -79,7 +79,8 @@ let ident = (alpha|'_') (alpha | chiffre |'_')*
 let sep = '\t' | ' ' | ','
 
 rule get_lab i = parse 
- | sep* (ident as lab) sep* ":" sep* ('\n'|"\r\n") {if Hashtbl.mem labels lab 
+ | sep* (ident as lab) sep* ":" sep* ('\n'|"\r\n") 
+			{if Hashtbl.mem labels lab 
 			then (raise (Assembleur_error "label defined twice"))
 			else Hashtbl.add labels lab (int_to_string i) ;
 			get_lab i lexbuf}
@@ -95,39 +96,49 @@ rule get_lab i = parse
 	{newline lexbuf ; get_lab (i+1) lexbuf}	
  | sep* key_w  sep+ chiffre+ sep* ('\n'|"\r\n") 
 	 {newline lexbuf ; get_lab (i+1) lexbuf}
- | _  {}
+ | eof {}
+ | _ {}
 
 and assembleur fft = parse 
  | sep* (key_w as op) sep+ '$' (ident as reg1) sep+ '$'(ident as reg2) sep* ('\n' | "\r\n")
 	{
+	try 
 	newline lexbuf ;
 	Format.fprintf fft "%s%s%s@." (Hashtbl.find key_words op) (Hashtbl.find registres reg1) (Hashtbl.find registres reg2) ;
 	decr nombre_lignes ;
 	assembleur fft lexbuf
+	with Not_found _ -> raise (Assembleur_error ("undefined keyword "^op)) 
 	}
 
  | sep* (key_w as op) sep+ '$'(ident as reg1) sep* ('\n' | "\r\n")
 	{
+	try 
 	newline lexbuf ;
 	Format.fprintf fft "%s%s0000@." (Hashtbl.find key_words op) (Hashtbl.find registres reg1)  ;
 	decr nombre_lignes ;
 	assembleur fft lexbuf
+	with Not_found _ -> raise (Assembleur_error ("undefined keyword "^op)) 
 	}
 
  | sep* (key_w as op) sep+ (ident as lab) sep* ('\n'|"\r\n")
 	{
+	try
 	newline lexbuf ;
 	Format.fprintf fft "%s%s@." (Hashtbl.find key_words op) (Hashtbl.find labels lab); 
 	decr nombre_lignes ;
     	assembleur fft lexbuf
+	with Not_found _ -> raise (Assembleur_error ("undefined keyword "^op^" or label "^lab)) 
 	}
  | sep* ident sep* ':' sep* ('\n' | "\r\n") {newline lexbuf ; assembleur fft lexbuf}
 
  | sep* (key_w as op) sep+ (chiffre+ as i) sep* ('\n'|"\r\n") 
 	{
+	try
 	newline lexbuf ;
 	Format.fprintf fft "%s%s@." (Hashtbl.find key_words op) (int_to_string (int_of_string i)) ; decr nombre_lignes ;
-	assembleur fft lexbuf } 
+	assembleur fft lexbuf 
+	with Not_found _ -> raise (Assembleur_error ("undefined keyword "^op)) 
+	} 
 
  | "(*" {comment lexbuf ; assembleur fft lexbuf}
 

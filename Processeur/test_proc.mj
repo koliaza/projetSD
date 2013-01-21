@@ -201,15 +201,16 @@ multiplier16 (a:[8], b:[8]) = (c:[16]) where
 	(c7,garbage7) = adder16<16>(c6, mux16(a[6],0b000000.b.0b00,0b0000000000000000), 0);
 	(c,garbage8) = adder16<16>(c7, mux16(a[7],0b0000000.b.0b0,0b0000000000000000), 0);
 end where
-	
-shiftr8 (a:[8], b:[8]) = (c:[8]) where
+
+(*inverser left et right pour coller avec la convention standard*)	
+shiftl8 (a:[8], b:[8]) = (c:[8]) where
 	d= mux8 (b[2], 0b0000.a[0..3],a); 
 	e= mux8 (b[1], 0b00 . d[0..5], d); 
 	f= mux8 (b[0], 0b0 . e[0..6], e); 
 	c= mux8 (b[3]+b[4]+b[5]+b[6]+b[7], 0b00000000, f) ; 
 end where
 
-shiftl8 (a:[8], b:[8]) = (c:[8]) where
+shiftr8 (a:[8], b:[8]) = (c:[8]) where
 	d= mux8 (b[2], a[4..7].0b0000,a); 
 	e= mux8 (b[1], d[2..7].0b00  , d); 
 	f= mux8 (b[0], e[1..7].0b0, e); 
@@ -217,7 +218,7 @@ shiftl8 (a:[8], b:[8]) = (c:[8]) where
 end where
 		 
 
-sla8  (a:[8], b:[8]) = (c:[8]) where
+sra8  (a:[8], b:[8]) = (c:[8]) where
 	d= mux8 (b[2],  a[4..7].a[7].a[7].a[7].a[7],a); 
 	e= mux8 (b[1], d[2..7].a[7] .a[7], d); 
 	f= mux8 (b[0], e[1..7].a[7], e); 
@@ -233,7 +234,7 @@ alu(a:[8],b:[8],config:[8]) = (s:[8]) where
   entree_adder2 = mux8(config[7],nb,b) ;
   (sortie_adder,inutile) = adder8<8>(entree_adder1,entree_adder2,config[7]) ;
   (sortie_mult,ovf_mult) = multiplier8(a,b) ;
-  (sortie_mults,ovf_mults) = signed_multiplier8(a,b) ; 
+  sortie_mults = sortie_mult ;
 
 
   sortie_arith = multi_mux<8,2>(config[2..3],sortie_adder . sortie_mult . sortie_mults . b) ;
@@ -242,8 +243,8 @@ alu(a:[8],b:[8],config:[8]) = (s:[8]) where
   sortie_xor = xor8(a,b) ;
   sortie_shl = shiftl8(a,b) ;
   sortie_shr = shiftr8(a,b) ;
-  sortie_sla = sla8(a,b) ;
-  allsorties = sortie_and . sortie_or . sortie_xor . na . sortie_shl . sortie_shr . sortie_sla . zero8 ;
+  sortie_sra = sra8(a,b) ;
+  allsorties = sortie_and . sortie_or . sortie_xor . na . sortie_shl . sortie_shr . sortie_sra . zero8 ;
   sortie_logique = multi_mux<8,3>(config[2..4],allsorties) ; 
   
   s = multi_mux<8,1>(config[1],sortie_arith . sortie_logique) ; 
@@ -291,7 +292,7 @@ comparesigned <n> (a:[n], b:[n]) = (o:[2]) where
 end where
 
 
-main() = (s:[8],s':[8],pc:[8]) where 
+main() = () where 
 
 instr = rom<8,16>(pc) ;
 instruction = instr[0..7] ; 
@@ -353,8 +354,6 @@ need_write_arg1 = is_arith or is_li_real or is_lw_real or is_jal_real ;
 
 
 pc = reg8(1,mux8(will_jump,mux8(is_jr,reg1,argument_8bit),pc_plus_1) ) ;
-s = reg1;
-s' = reg2 ;
 
 end where
 
